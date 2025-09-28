@@ -23,8 +23,11 @@ class _ForgetPasswordState extends State<ForgetPasswordPage>{
 
   _sendOTP() async {
 
+    Map<String, String> param = {
+      "email":"wang9431@saskpolytech.ca"
+    };
     // ignore: prefer_collection_literals
-    final result = await post('/', Map(), (json) => json as Map<String, dynamic>);
+    final result = await post('/users/reset_password', param, (json) => json as Map<String, dynamic>);
 
     String? code = "";
     switch(result){
