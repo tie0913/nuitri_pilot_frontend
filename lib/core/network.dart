@@ -18,56 +18,61 @@ Future<Result<T>> post<T>(String path, Map<String, dynamic> body, T Function(Obj
     );
 
     final env = ApiEnvelope<T>.fromJson(resp.data, fromJsonT);
+    /**
+     * 这里意味着后端执行给出了结果，有错就是业务错误了
+     * 所以逻辑出错了就返回业务错了，就返回业务错误。
+     * 业务成功就返回业务成功结果同时带着结果对象
+     */
     if(env.success){
-      return Ok(value:env.data as T);
+      return BizOk(value:env.data as T);
     }else{
-      return Err(error: mapBizError(env));
+      return mapBizError(env);
     }
   }on DioException catch(e) {
-    return Err(error: mapDioError(e));
+    return mapDioError(e);
   }catch(e){
-    return Err(error:AppError(ErrorKind.unknown, message: "Unknown Error $e"));
+    return Err(ErrorKind.unknown, -1, "Unknown Error $e");
   }
 }
 
-AppError mapBizError<T>(ApiEnvelope<T> env){
-  return AppError(ErrorKind.business, message: env.message, bizCode: env.bizCode);
+BizErr<T> mapBizError<T>(ApiEnvelope<T> env){
+  return BizErr(env.code, env.message);
 }
 
-AppError mapDioError(DioException e) {
+Err<T> mapDioError<T>(DioException e) {
   final sc = e.response?.statusCode;
 
   if (e.type == DioExceptionType.connectionTimeout ||
       e.type == DioExceptionType.sendTimeout ||
       e.type == DioExceptionType.receiveTimeout) {
-    return AppError(ErrorKind.network, message: "Timeout");
+    return Err(ErrorKind.network, sc, "Timeout");
   }
 
   if (e.type == DioExceptionType.connectionError) {
-    return AppError(ErrorKind.network, message: "Cannot connect to the Server");
+    return Err(ErrorKind.network, sc, "Cannot connect to the Server");
   }
 
-  if (sc == 401) return AppError(ErrorKind.unauthorized, httpStatus: sc, message: "Unauthorized");
-  if (sc == 403) return AppError(ErrorKind.forbidden, httpStatus: sc, message: "Forbiden");
-  if (sc == 404) return AppError(ErrorKind.notFound, httpStatus: sc, message: "Resources not Exist");
-  if (sc == 429) return AppError(ErrorKind.rateLimited, httpStatus: sc, message: "Too many times");
-  if (sc == 422) return AppError(ErrorKind.validation, httpStatus: sc, message: "Illegal Parameters");
-  if (sc != null && sc >= 500) return AppError(ErrorKind.server, httpStatus: sc, message: "Server Error");
+  if (sc == 401) return Err(ErrorKind.unauthorized, sc, "Unauthorized");
+  if (sc == 403) return Err(ErrorKind.forbidden, sc, "Forbiden");
+  if (sc == 404) return Err(ErrorKind.notFound, sc, "Resources not Exist");
+  if (sc == 429) return Err(ErrorKind.rateLimited, sc, "Too many times");
+  if (sc == 422) return Err(ErrorKind.validation, sc, "Illegal Parameters");
+  if (sc != null && sc >= 500) return Err(ErrorKind.server, sc, "Server Error");
 
-  return AppError(ErrorKind.unknown,
-      httpStatus: sc, message: e.message ?? "Unknown Network Error");
+  return Err(ErrorKind.unknown,
+      sc,  e.message ?? "Unknown Network Error");
 }
 
 
 class ApiEnvelope<T>{
   final bool success;
-  final int bizCode;
+  final int code;
   final String message;
   final T? data;
 
   ApiEnvelope({
     required this.success,
-    required this.bizCode,
+    required this.code,
     required this.message,
     required this.data
   });
@@ -75,7 +80,7 @@ class ApiEnvelope<T>{
   factory ApiEnvelope.fromJson(Map<String, dynamic> json, T Function(Object? json) fromJsonT){
     return ApiEnvelope(
       success: json['success'], 
-      bizCode: json['bizCode'], 
+      code: json['code'], 
       message: json['message'], 
       data: json['data'] != null? fromJsonT(json['data']) : null);
   }
@@ -83,26 +88,29 @@ class ApiEnvelope<T>{
 
 enum ErrorKind{network, unauthorized, forbidden, notFound, rateLimited, server, validation, business, unknown}
 
-class AppError{
-  final ErrorKind kind;
-  final String message;
-  final int? httpStatus;
-  final int? bizCode;
-  final String? i18nKey;
-  const AppError(this.kind, {this.message="", this.httpStatus, this.bizCode, this.i18nKey});
-}
-
 sealed class Result<T>{
   const Result();
 }
 
-class Ok<T> extends Result<T>{
+class BizResult<T> extends Result<T>{
+  const BizResult();
+}
+
+class BizOk<T> extends BizResult<T>{
   final T value;
-  const Ok({required this.value});
+  const BizOk({required this.value});
+}
+
+class BizErr<T> extends BizResult<T>{
+  final int code;
+  final String message;
+  const BizErr(this.code, this.message);
 }
 
 class Err<T> extends Result<T>{
-  final AppError error;
-  const Err({required this.error});
+  final ErrorKind kind;
+  final int? httpStatus;
+  final String message;
+  const Err(this.kind, this.httpStatus, this.message);
 }
 

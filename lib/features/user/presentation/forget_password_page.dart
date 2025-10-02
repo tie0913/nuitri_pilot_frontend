@@ -1,6 +1,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/di.dart';
 import '../../../core/network.dart';
 
 class ForgetPasswordPage extends StatefulWidget{
@@ -20,27 +21,25 @@ class _ForgetPasswordState extends State<ForgetPasswordPage>{
   final _otpControl = TextEditingController();
   final _newPwdControl = TextEditingController();
   final _confirmPwdControl = TextEditingController();
+  
 
   _sendOTP() async {
 
-    Map<String, String> param = {
-      "email":"wang9431@saskpolytech.ca"
-    };
-    // ignore: prefer_collection_literals
-    final result = await post('/users/reset_password', param, (json) => json as Map<String, dynamic>);
-
-    String? code = "";
-    switch(result){
-      case Ok(value: final body):
-        code = body["code"];
-      case Err(error: final e):{
-        code = "Exception";
-      }
+    setState(() {
+      _loading = true;
+    });
+    String email = _emailControl.text;
+    Result<String> res = await DI.I.userRepository.apply_for_reseting_password_otp(email);
+    if(res is BizOk<String>){
+      setState(() {
+        step = 2;
+      });
+    }else{
+      DI.I.errorHandler.handleBothError(res);
     }
 
-    setState(() => step = 2);
     setState(() {
-      _otpControl.text = code!;
+      _loading = false;
     });
   }
 

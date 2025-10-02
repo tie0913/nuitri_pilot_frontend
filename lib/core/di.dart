@@ -1,4 +1,9 @@
 // lib/core/di.dart
+import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/error/error_handler.dart';
+import 'package:nuitri_pilot_frontend/features/user/data/user_repository_impl.dart';
+import 'package:nuitri_pilot_frontend/features/user/domain/user_repository.dart';
+
 import '../features/auth/data/local_auth_data_source.dart';
 import '../features/auth/data/auth_repository_impl.dart';
 import '../features/auth/domain/auth_repository.dart';
@@ -19,19 +24,26 @@ class DI {
 
   late final LocalAuthDataSource _localAuthDS;
   late final AuthRepository _authRepo;
+  late final ErrorHandler _errorHandler;
+  late final UserRepository _userRepository;
+
+    /// 导航 key，便于全局错误提示/跳转
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>(); 
 
   AuthRepository get authRepo => _authRepo;
+
+  ErrorHandler get  errorHandler => _errorHandler;
+
+  UserRepository get userRepository => _userRepository;
 
   /// 在应用启动时调用一次。
   void init() {
     _localAuthDS = LocalAuthDataSource();
     _authRepo = AuthRepositoryImpl(_localAuthDS);
+    _errorHandler = GlobalErrorHandler(navigatorKey: navigatorKey, messengerKey:scaffoldMessengerKey);
+    _userRepository = UserRepositoryImpl();
 
-    // ------------------------------------------------------------
-    // <-- 这里注册鉴权（如果你有全局拦截器/路由守卫要用到 authRepo）
-    // 例：AuthInterceptor.getToken = () async => await _localAuthDS.readToken();
-    //     AuthInterceptor.refreshToken = () async => await _authRepo.refreshToken();
-    // 目前我们先不接 http 拦截器，专注路由鉴权即可。
-    // ------------------------------------------------------------
   }
 }
