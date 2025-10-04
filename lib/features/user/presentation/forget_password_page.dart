@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
-import 'package:nuitri_pilot_frontend/features/user/presentation/widgets/text_field_widget.dart';
+import 'package:nuitri_pilot_frontend/core/widgets/text_field_widget.dart';
 import '../../../core/network.dart';
 import 'package:email_validator/email_validator.dart';
 

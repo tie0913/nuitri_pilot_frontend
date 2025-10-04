@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nuitri_pilot_frontend/features/user/presentation/widgets/text_field_widget.dart';
+import 'package:nuitri_pilot_frontend/core/widgets/text_field_widget.dart';
 import '../../../core/di.dart';
 
 class SignInPage extends StatefulWidget {
