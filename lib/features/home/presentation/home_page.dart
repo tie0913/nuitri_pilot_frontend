@@ -1,27 +1,31 @@
 // lib/features/home/presentation/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/features/home/presentation/home_body.dart';
 
-class HomePage extends StatelessWidget {
+
+
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _index = 0; // 0:home 1:account 2:more
+  final _pages = const [HomeBody()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nutri Pilot')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.home, size: 64),
-            const SizedBox(height: 12),
-            Text(
-              'Welcome to Nutri Pilot',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            const Text('This is a protected page after auth.'),
-          ],
-        ),
+      body: IndexedStack(index: _index, children: _pages),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.more_horiz), label: 'More'),
+        ],
       ),
     );
   }

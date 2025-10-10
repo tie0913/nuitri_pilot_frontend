@@ -36,9 +36,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() async {
-    await _local.clear();
-    _isLoggedIn = false;
+  Future<bool> signOut() async {
+    String? token = await _local.readToken();
+    Map<String, dynamic> param = {"token": token!};
+    InterfaceResult<String> result = await post("/auth/signout", param, (json)=> json.toString());
+    if(DI.I.messageHandler.isErr(result)){
+      DI.I.messageHandler.handleErr(result);
+      return false;
+    }else{
+      await _local.clear();
+      _isLoggedIn = false;
+      return true;
+    }
   }
 
   @override
