@@ -1,6 +1,7 @@
 // lib/features/home/presentation/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/features/home/presentation/home_body.dart';
+import 'package:nuitri_pilot_frontend/features/home/presentation/more_body.dart';
 
 
 
@@ -12,7 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _index = 0; // 0:home 1:account 2:more
-  final _pages = const [HomeBody()];
+  final _pages = const [HomeBody(), HomeBody(), MoreBody()];
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,7 @@ class _HomePageState extends State<HomePage> {
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.menu_book), label: 'Profile'),
           NavigationDestination(icon: Icon(Icons.more_horiz), label: 'More'),
         ],
       ),

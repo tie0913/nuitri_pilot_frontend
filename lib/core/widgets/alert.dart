@@ -14,8 +14,8 @@ Future<bool> YesOrNo(BuildContext context,
             title: Text(title),
             content: Text(message),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(confirmText)),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(cancelText)),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(cancelText)),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(confirmText)),
             ],
           ),
         ) ??

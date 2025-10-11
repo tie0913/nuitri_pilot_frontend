@@ -23,27 +23,36 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> signIn({required String email, required String password}) async {
     Map<String, dynamic> param = {"email": email, "password": password};
-    InterfaceResult<String> result =  await post("/auth/signin", param, (json) => json.toString());
-    if(DI.I.messageHandler.isErr(result)){
+    InterfaceResult<String> result = await post(
+      "/auth/sign-in",
+      param,
+      (json) => json.toString(),
+    );
+    if (DI.I.messageHandler.isErr(result)) {
       DI.I.messageHandler.handleErr(result);
       _isLoggedIn = false;
-    }else{
-      await _local.writeToken('demo_token_${DateTime.now().millisecondsSinceEpoch}');
+    } else {
+      await _local.writeToken(
+        result.value!
+      );
       _isLoggedIn = true;
     }
     return _isLoggedIn;
-
   }
 
   @override
   Future<bool> signOut() async {
     String? token = await _local.readToken();
-    Map<String, dynamic> param = {"token": token!};
-    InterfaceResult<String> result = await post("/auth/signout", param, (json)=> json.toString());
-    if(DI.I.messageHandler.isErr(result)){
+    InterfaceResult<String> result = await post(
+      "/auth/sign-out",
+      {},
+      (json) => json.toString(),
+      token:token,
+    );
+    if (DI.I.messageHandler.isErr(result)) {
       DI.I.messageHandler.handleErr(result);
       return false;
-    }else{
+    } else {
       await _local.clear();
       _isLoggedIn = false;
       return true;

@@ -12,7 +12,7 @@ class UserRepositoryImpl extends UserBaseRepository {
   ) async {
     Map<String, dynamic> param = {"email": email};
     return await post(
-      '/users/apply_for_reseting_password_otp',
+      '/auth/forget-password',
       param,
       (json) => json.toString(),
     );
@@ -31,7 +31,7 @@ class UserRepositoryImpl extends UserBaseRepository {
     };
 
     return await post(
-      '/users/confirm_otp_and_reset_password',
+      '/auth/reset-password',
       param,
       (json) => json.toString(),
     );
