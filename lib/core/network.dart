@@ -3,8 +3,8 @@ import 'package:nuitri_pilot_frontend/core/common_result.dart';
 
 final connector = Dio(
   BaseOptions(
-    baseUrl: 'http://localhost:5007',
-    //baseUrl: 'http://10.0.2.2:5007',
+    //baseUrl: 'http://localhost:5007',
+    baseUrl: 'http://10.0.2.2:5007',
     connectTimeout: const Duration(seconds: 8),
     receiveTimeout: const Duration(seconds: 12),
   ),

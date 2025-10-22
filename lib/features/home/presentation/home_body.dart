@@ -9,10 +9,11 @@ class HomeBody extends StatefulWidget{
 
 class _HomeBodyState extends State<HomeBody>{
 
+  void _showImageSourceActionSheet(){}
+
   @override
   Widget build(BuildContext context){
   return Scaffold(
-      appBar: AppBar(title: const Text('Nutri Pilot')),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -28,6 +29,12 @@ class _HomeBodyState extends State<HomeBody>{
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showImageSourceActionSheet,
+        tooltip: 'Add Photo',
+        child: const Icon(Icons.add_a_photo),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat
     );
   }
 }
