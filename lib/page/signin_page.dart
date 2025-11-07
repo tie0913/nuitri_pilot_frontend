@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/widgets/text_field_widget.dart';
-import '../../../core/di.dart';
+import '../core/di.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -18,10 +18,7 @@ class _SignInPageState extends State<SignInPage> {
 
   Future<void> _submit() async {
     setState(() { _loading = true;});
-    bool success = await DI.I.authRepo.signIn(
-      email: _userCtrl.text.trim(),
-      password: _passCtrl.text,
-    );
+    bool success = await DI.I.authService.signIn(_userCtrl.text.trim(), _passCtrl.text);
     setState(() => _loading = false);
     if(success){
       Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);

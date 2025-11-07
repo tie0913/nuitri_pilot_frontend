@@ -1,12 +1,12 @@
 // lib/core/di.dart
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/message_handler.dart';
-import 'package:nuitri_pilot_frontend/features/user/data/user_repository_impl.dart';
-import 'package:nuitri_pilot_frontend/features/user/domain/user_repository.dart';
+import 'package:nuitri_pilot_frontend/page/wellness_body.dart';
+import 'package:nuitri_pilot_frontend/repo/wellness_repo.dart';
+import 'package:nuitri_pilot_frontend/service/auth_service.dart';
+import 'package:nuitri_pilot_frontend/service/wellness_service.dart';
 
-import '../features/auth/data/local_auth_data_source.dart';
-import '../features/auth/data/auth_repository_impl.dart';
-import '../features/auth/domain/auth_repository.dart';
+import '../repo/auth_repo.dart';
 /*
  * 这个是组合模式依赖管理的类，使用这个类，把所有组件的构建组合放在一起
  * 这样，手动模拟了Spring中的依赖注入功能。
@@ -18,11 +18,9 @@ import '../features/auth/domain/auth_repository.dart';
 class DI {
   DI._();
   static final DI I = DI._();
-
-  late final LocalAuthDataSource _localAuthDS;
-  late final AuthRepository _authRepo;
+  late final AuthService _authService;
+  late final WellnessService _wellnessService;
   late final MessageHandler _messageHandler;
-  late final UserRepository _userRepository;
 
   /// 导航 key，便于全局错误提示/跳转
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -30,20 +28,20 @@ class DI {
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
-  AuthRepository get authRepo => _authRepo;
+  AuthService get authService => _authService;
+
+  WellnessService get wellnessService => _wellnessService;
 
   MessageHandler get messageHandler => _messageHandler;
 
-  UserRepository get userRepository => _userRepository;
 
   /// 在应用启动时调用一次。
   void init() {
-    _localAuthDS = LocalAuthDataSource();
-    _authRepo = AuthRepositoryImpl(_localAuthDS);
+    _authService = AuthService(AuthRepository());
+    _wellnessService = WellnessService(WellnessRepo());
     _messageHandler = GlobalMessageHandler(
       navigatorKey: navigatorKey,
       messengerKey: scaffoldMessengerKey,
     );
-    _userRepository = UserRepositoryImpl();
   }
 }

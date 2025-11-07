@@ -16,7 +16,7 @@ final connector = Dio(
 Future<InterfaceResult<T>> post<T>(
   String path,
   Map<String, dynamic> body,
-  T Function(Object? json) fromJsonT, {
+  T Function(Object json) fromJsonT, {
   String? token,
 }) async {
   try {
@@ -24,7 +24,7 @@ Future<InterfaceResult<T>> post<T>(
       path,
       data: body,
       options: Options(
-        headers: {if (token != null) 'Authorization': '$token'},
+        headers: {if (token != null) 'Authorization': token},
       ),
     );
 
@@ -93,13 +93,13 @@ class ApiEnvelope<T> {
 
   factory ApiEnvelope.fromJson(
     Map<String, dynamic> json,
-    T Function(Object? json) fromJsonT,
+    T Function(Object json) fromJsonT,
   ) {
     return ApiEnvelope(
       success: json['success'],
       code: json['code'],
       message: json['message'],
-      data: json['data'] != null ? fromJsonT(json['data']) : null,
+      data: json['data'] 
     );
   }
 }

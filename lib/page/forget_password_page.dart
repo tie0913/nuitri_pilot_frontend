@@ -61,8 +61,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     if (DI.I.messageHandler.isErr(validatingResult)) {
       DI.I.messageHandler.handleErr(validatingResult);
     } else {
-      InterfaceResult<String> res = await DI.I.userRepository
-          .applyForResetingPasswordOtp(email);
+      InterfaceResult<String> res = await DI.I.authService.resetPassword(email);
       if (DI.I.messageHandler.isErr(res)) {
         DI.I.messageHandler.handleErr(res);
       } else {
@@ -88,7 +87,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     if(DI.I.messageHandler.isErr(validateRes)){
       DI.I.messageHandler.handleErr(validateRes);
     }else{
-      InterfaceResult<String> res = await DI.I.userRepository.confirmOtpAndResetPassword(email, otp, newPwd);
+      InterfaceResult<String> res = await DI.I.authService.confirmPassword(email, otp, newPwd);
       if(DI.I.messageHandler.isErr(res)){
         DI.I.messageHandler.handleErr(res);
       }else{

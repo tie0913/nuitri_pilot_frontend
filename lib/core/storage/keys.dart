@@ -1,0 +1,2 @@
+
+const LOCAL_TOKEN_KEY = "LOCAL_TOKEN_KEY";

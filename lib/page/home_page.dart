@@ -1,8 +1,8 @@
 // lib/features/home/presentation/home_page.dart
 import 'package:flutter/material.dart';
-import 'package:nuitri_pilot_frontend/features/home/presentation/home_body.dart';
-import 'package:nuitri_pilot_frontend/features/home/presentation/more_body.dart';
-import 'package:nuitri_pilot_frontend/features/wellness/presentation/wellness_body.dart';
+import 'package:nuitri_pilot_frontend/page/body/home_body.dart';
+import 'package:nuitri_pilot_frontend/page/body/more_body.dart';
+import 'package:nuitri_pilot_frontend/page/wellness_body.dart';
 
 
 

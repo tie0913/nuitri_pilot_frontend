@@ -1,6 +1,7 @@
 // lib/core/require_auth.dart
 import 'package:flutter/material.dart';
-import 'di.dart';
+import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
+import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
 
 /// 给需要保护的页面外面包一层 RequireAuth。
 /// 进入时统一执行鉴权（异步），未通过则跳 /signin。
@@ -19,19 +20,20 @@ class RequireAuth extends StatefulWidget {
 }
 
 class _RequireAuthState extends State<RequireAuth> {
-  late Future<bool> _future;
 
   @override
   void initState() {
     super.initState();
-    // 统一恢复会话 / 校验登录
-    _future = DI.I.authRepo.restoreSession();
+  }
+
+  Future<bool> hasSignedIn() async {
+    return LocalStorage().containsKey(LOCAL_TOKEN_KEY);
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: _future,
+      future: hasSignedIn(),
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));

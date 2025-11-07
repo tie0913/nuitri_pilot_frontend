@@ -1,9 +1,9 @@
 // lib/core/app_router.dart
 import 'package:flutter/material.dart';
 import 'require_auth.dart';
-import '../features/home/presentation/home_page.dart';
-import '../features/user/presentation/signin_page.dart';
-import '../features/user/presentation/forget_password_page.dart';
+import '../page/home_page.dart';
+import '../page/signin_page.dart';
+import '../page/forget_password_page.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {

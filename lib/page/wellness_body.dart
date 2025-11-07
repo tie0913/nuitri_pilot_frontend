@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/di.dart';
+import 'package:nuitri_pilot_frontend/data/data.dart';
 
 class WellnessBody extends StatelessWidget{
   const WellnessBody({super.key});
@@ -21,7 +23,7 @@ class WellnessBody extends StatelessWidget{
               indicatorColor: Theme.of(context).colorScheme.primary,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               tabs: const [
-                Tab(text: "Conditions"),
+                Tab(text: "Chronics"),
                 Tab(text: "Allergies"),
                 Tab(text: "Goals"),
                 Tab(text: "Metrics"),
@@ -34,7 +36,8 @@ class WellnessBody extends StatelessWidget{
             child: TabBarView(
               physics: const BouncingScrollPhysics(),
               children: const [
-                _ConditionsPanel(),
+                //_ConditionsPanel(),
+                ConditionsPanelStateful(),
                 _AllergiesPanel(),
                 _GoalsPanel(),
                 _MetricsPanel(),
@@ -42,6 +45,88 @@ class WellnessBody extends StatelessWidget{
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class ConditionsPanelStateful extends StatefulWidget {
+  const ConditionsPanelStateful({super.key});
+
+  @override
+  State<ConditionsPanelStateful> createState() => _ConditionsPanelStatefulState();
+}
+
+class _ConditionsPanelStatefulState extends State<ConditionsPanelStateful> {
+  late Future<UserChronic?> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = DI.I.wellnessService.getUserChronics();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _future = DI.I.wellnessService.getUserChronics(); // 重新拉取
+    });
+    await _future;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: FutureBuilder<UserChronic?>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return ListView(
+              children: [
+                const SizedBox(height: 120),
+                Center(
+                  child: Column(
+                    children: [
+                      Text('加载失败：${snap.error}'),
+                      const SizedBox(height: 8),
+                      FilledButton(onPressed: _refresh, child: const Text('重试')),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+
+          final data = snap.data?.chronics?? const [];
+          if (data.isEmpty) {
+            return ListView(
+              children: const [
+                SizedBox(height: 120),
+                _PlaceholderPanel(
+                  title: "Chronic Conditions",
+                  description: "No conditions yet. Pull to refresh or add new.",
+                  icon: Icons.favorite_outline,
+                ),
+              ],
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: data.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (_, i) {
+              final c = data[i];
+              return ListTile(
+                title: Text(c.name),
+                leading: const Icon(Icons.health_and_safety_outlined),
+                trailing: const Icon(Icons.chevron_right),
+              );
+            },
+          );
+        },
       ),
     );
   }
