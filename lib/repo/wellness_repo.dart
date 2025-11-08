@@ -7,25 +7,14 @@ import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
 import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
 
 class WellnessRepo {
-  Map<String, Map<String, String>> routeMap = {
-    "chronics": {
-      "list": "user_chronics",
-      "addCatalogItem": "add_new_chronics",
-    },
-    "allergies": {
-      "list": "user_allergies",
-      "addCatalogItem": "add_new_allergy",
-    },
-  };
-
-  Future<InterfaceResult<dynamic>> getWellnessCatagory(
-    String tag,
-  ) async {
+  Future<InterfaceResult<dynamic>> getWellnessCatagory(String tag) async {
     Uint8List? value = LocalStorage().get(LOCAL_TOKEN_KEY);
     String token = utf8.decode(Uint8List.fromList(value!));
-    Map<String, String> map = routeMap[tag]!;
-    String path = map["list"]!;
-    return await post('/wellness/$path', {},  token: token);
+    return await post(
+      '/wellness/get_user_wellness_and_items?catalogName=$tag',
+      {},
+      token: token,
+    );
   }
 
   Future<InterfaceResult<dynamic>> addCatalogItem(
@@ -34,6 +23,16 @@ class WellnessRepo {
   ) async {
     Uint8List? value = LocalStorage().get(LOCAL_TOKEN_KEY);
     String token = utf8.decode(Uint8List.fromList(value!));
-    return await post('/wellness/add_wellness_catalog_item?catalogName=$tag', {"name": name}, token: token);
+    return await post('/wellness/add_wellness_catalog_item?catalogName=$tag', {
+      "name": name,
+    }, token: token);
+  }
+
+  Future<InterfaceResult<dynamic>> saveUserSelectedIds(tag, selectedIds) async {
+    Uint8List? value = LocalStorage().get(LOCAL_TOKEN_KEY);
+    String token = utf8.decode(Uint8List.fromList(value!));
+    return await post('/wellness/save_user_selected_ids?catalogName=$tag', {
+      "selectedIds": selectedIds,
+    }, token: token);
   }
 }

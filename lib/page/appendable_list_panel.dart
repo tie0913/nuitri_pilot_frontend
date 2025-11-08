@@ -104,11 +104,11 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
   }
 
   Future<void> _save() async {
-    await DI.I.wellnessService.saveUserSelection(
+    bool succeed = await DI.I.wellnessService.saveUserSelection(
       widget.tag,
       _selected.toList(),
     );
-    if (!mounted) return;
+    if (!mounted && !succeed) return;
     setState(() => _dirty = false);
     ScaffoldMessenger.of(
       context,
