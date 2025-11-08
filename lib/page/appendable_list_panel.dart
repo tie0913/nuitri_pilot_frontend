@@ -5,10 +5,7 @@ import 'package:nuitri_pilot_frontend/data/data.dart';
 class AppendableListPanel extends StatefulWidget {
   final String tag;
 
-  const AppendableListPanel({
-    super.key,
-    required this.tag,
-  });
+  const AppendableListPanel({super.key, required this.tag});
 
   @override
   State<AppendableListPanel> createState() => _AppendableListPanelState();
@@ -91,8 +88,15 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
     final created = await DI.I.wellnessService.addItem(widget.tag, trimmed);
     if (!mounted || created == null) return;
+
+    List<CatagoryItem> newItems = [];
+    newItems.addAll(_items);
+    if (!_items.contains(created)) {
+      newItems.add(created);
+    }
+
     setState(() {
-      _items = [..._items, created!];
+      _items = newItems;
       _selected.add(created.id); // 新增默认选中
       _dirty = true;
       _query = ''; // 清空过滤，避免看不到新项
@@ -101,14 +105,14 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
   Future<void> _save() async {
     await DI.I.wellnessService.saveUserSelection(
-       widget.tag,
-       _selected.toList(),
+      widget.tag,
+      _selected.toList(),
     );
     if (!mounted) return;
     setState(() => _dirty = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Saved')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Saved')));
   }
 
   List<CatagoryItem> _filtered() {
@@ -125,7 +129,8 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
         future: _future,
         builder: (context, snap) {
           // 首屏加载
-          if (snap.connectionState == ConnectionState.waiting && _items.isEmpty) {
+          if (snap.connectionState == ConnectionState.waiting &&
+              _items.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
           // 加载成功后把数据灌入本地一次
@@ -142,7 +147,10 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
                     children: [
                       const Text('Loading data has error'),
                       const SizedBox(height: 8),
-                      FilledButton(onPressed: _refresh, child: const Text('Reload')),
+                      FilledButton(
+                        onPressed: _refresh,
+                        child: const Text('Reload'),
+                      ),
                     ],
                   ),
                 ),
@@ -192,7 +200,9 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
                         children: const [
                           Icon(Icons.inbox_outlined, size: 40),
                           SizedBox(height: 8),
-                          Text('No results. Try a different keyword or add a new one.'),
+                          Text(
+                            'No results. Try a different keyword or add a new one.',
+                          ),
                         ],
                       ),
                     )
@@ -233,7 +243,8 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
                             TextButton(
                               onPressed: () async {
                                 // 丢弃改动：重新拉取并覆盖本地
-                                final cat = await DI.I.wellnessService.getWellnessCatagory(widget.tag);
+                                final cat = await DI.I.wellnessService
+                                    .getWellnessCatagory(widget.tag);
                                 if (!mounted) return;
                                 setState(() => _applyLoaded(cat));
                               },

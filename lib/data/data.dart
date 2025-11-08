@@ -6,6 +6,13 @@ class CatagoryItem {
   factory CatagoryItem.fromJson(Map<String, dynamic> json) {
     return CatagoryItem(id: json['_id'], name: json['name']);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is CatagoryItem && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class WellnessCatagory {
