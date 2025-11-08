@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
+import 'package:nuitri_pilot_frontend/core/di.dart';
 import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
 import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
 import 'package:nuitri_pilot_frontend/repo/auth_repo.dart';
@@ -32,16 +33,29 @@ class AuthService{
     return success;
   }
 
-  Future<InterfaceResult<String>> resetPassword(String email) async {
-    return await repo.resetPassword(email);
+  Future<String?> resetPassword(String email) async {
+    InterfaceResult<dynamic> res =  await repo.resetPassword(email);
+
+    if (DI.I.messageHandler.isErr(res)) {
+      DI.I.messageHandler.handleErr(res);
+      return null;
+    } else {
+      return res.value.toString();
+    }
   }
 
-  Future<InterfaceResult<String>> confirmPassword(
+  Future<String?> confirmPassword(
     String email,
     String otp,
     String newPwd,
   ) async {
-    return await repo.confirmPassword(email, otp, newPwd);
+    InterfaceResult<dynamic> res =  await repo.confirmPassword(email, otp, newPwd);
+    if (DI.I.messageHandler.isErr(res)) {
+      DI.I.messageHandler.handleErr(res);
+      return null;
+    } else {
+      return res.value.toString();
+    }
   }
 
 }

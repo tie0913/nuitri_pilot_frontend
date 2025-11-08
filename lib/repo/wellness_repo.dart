@@ -16,7 +16,6 @@ class WellnessRepo {
     InterfaceResult<dynamic> res = await post(
       '/wellness/$tag',
       {},
-      (json) => json.toString(),
       token: token,
     );
 

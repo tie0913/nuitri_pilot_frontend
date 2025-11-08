@@ -7,24 +7,22 @@ class AuthRepository {
 
   Future<String?> signIn({required String email, required String password}) async {
     Map<String, dynamic> param = {"email": email, "password": password};
-    InterfaceResult<String> result = await post(
+    InterfaceResult<dynamic> result = await post(
       "/auth/sign-in",
       param,
-      (json) => json.toString(),
     );
     if (DI.I.messageHandler.isErr(result)) {
       DI.I.messageHandler.handleErr(result);
       return null;
     } else {
-      return result.value;
+      return result.value.toString();
     }
   }
 
   Future<bool> signOut(String token) async {
-    InterfaceResult<String> result = await post(
+    InterfaceResult<dynamic> result = await post(
       "/auth/sign-out",
       {},
-      (json) => json.toString(),
       token:token,
     );
     if (DI.I.messageHandler.isErr(result)) {
@@ -35,18 +33,16 @@ class AuthRepository {
     }
   }
 
-  Future<InterfaceResult<String>> resetPassword(
+  Future<InterfaceResult<dynamic>> resetPassword(
     String email,
   ) async {
-    Map<String, dynamic> param = {"email": email};
     return await post(
       '/auth/forget-password',
-      param,
-      (json) => json.toString(),
+      {"email": email}
     );
   }
 
-  Future<InterfaceResult<String>> confirmPassword(
+  Future<InterfaceResult<dynamic>> confirmPassword(
     String email,
     String otp,
     String newPwd,
@@ -59,8 +55,7 @@ class AuthRepository {
 
     return await post(
       '/auth/reset-password',
-      param,
-      (json) => json.toString(),
+      param
     );
   }
 }

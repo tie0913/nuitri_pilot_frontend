@@ -29,7 +29,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     }
   }
 
-  AppResult<Map<String ,dynamic>> _validateReset(
+  AppResult<Map<String, dynamic>> _validateReset(
     String otp,
     String newPwd,
     String confirmPwd,
@@ -44,9 +44,9 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
       return AppErr(message: "New Password must equal to Confirm Password");
     } else {
       return AppOk(<String, dynamic>{
-        "otp":otp,
-        "newPwd":newPwd,
-        "confirmPwd":confirmPwd
+        "otp": otp,
+        "newPwd": newPwd,
+        "confirmPwd": confirmPwd,
       });
     }
   }
@@ -61,10 +61,8 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     if (DI.I.messageHandler.isErr(validatingResult)) {
       DI.I.messageHandler.handleErr(validatingResult);
     } else {
-      InterfaceResult<String> res = await DI.I.authService.resetPassword(email);
-      if (DI.I.messageHandler.isErr(res)) {
-        DI.I.messageHandler.handleErr(res);
-      } else {
+      String? res = await DI.I.authService.resetPassword(email);
+      if (res != null) {
         setState(() {
           step = 2;
         });
@@ -73,8 +71,6 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     setState(() {
       _loading = false;
     });
-
-    
   }
 
   _resetPassword() async {
@@ -83,18 +79,18 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     String newPwd = _newPwdControl.text;
     String confirmPwd = _confirmPwdControl.text;
 
-    AppResult<Map<String, dynamic>> validateRes = _validateReset(otp, newPwd, confirmPwd);
-    if(DI.I.messageHandler.isErr(validateRes)){
+    AppResult<Map<String, dynamic>> validateRes = _validateReset(
+      otp,
+      newPwd,
+      confirmPwd,
+    );
+    if (DI.I.messageHandler.isErr(validateRes)) {
       DI.I.messageHandler.handleErr(validateRes);
-    }else{
-      InterfaceResult<String> res = await DI.I.authService.confirmPassword(email, otp, newPwd);
-      if(DI.I.messageHandler.isErr(res)){
-        DI.I.messageHandler.handleErr(res);
-      }else{
-        if(res is BizOk){
-          DI.I.messageHandler.showMessage(res.value!);
+    } else {
+      String? res = await DI.I.authService.confirmPassword(email, otp, newPwd);
+      if (res != null) {
+          DI.I.messageHandler.showMessage(res);
           Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
-        }
       }
     }
   }

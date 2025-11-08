@@ -13,12 +13,10 @@ final connector = Dio(
 /*
  * Basic post method for networking
  */
-Future<InterfaceResult<T>> post<T>(
+Future<InterfaceResult<dynamic>> post<T>(
   String path,
   Map<String, dynamic> body,
-  T Function(Object json) fromJsonT, {
-  String? token,
-}) async {
+  {String? token}) async {
   try {
     final resp = await connector.post(
       path,
@@ -28,7 +26,7 @@ Future<InterfaceResult<T>> post<T>(
       ),
     );
 
-    final env = ApiEnvelope<T>.fromJson(resp.data, fromJsonT);
+    final env = ApiEnvelope<T>.fromJson(resp.data);
     /**
      * 这里意味着后端执行给出了结果，有错就是业务错误了
      * 所以逻辑出错了就返回业务错了，就返回业务错误。
@@ -92,8 +90,7 @@ class ApiEnvelope<T> {
   });
 
   factory ApiEnvelope.fromJson(
-    Map<String, dynamic> json,
-    T Function(Object json) fromJsonT,
+    Map<String, dynamic> json
   ) {
     return ApiEnvelope(
       success: json['success'],
