@@ -10,7 +10,7 @@ final connector = Dio(
     //baseUrl: 'http://localhost:5007',
     baseUrl: 'http://10.0.2.2:5007',
     connectTimeout: const Duration(seconds: 8),
-    receiveTimeout: const Duration(seconds: 12),
+    receiveTimeout: const Duration(seconds: 300),
   ),
 );
 

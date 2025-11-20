@@ -14,4 +14,11 @@ class SuggestionRepo {
     String token = utf8.decode(Uint8List.fromList(value!));
     return await post('/suggestion/ask', {'img': file}, token: token);
   }
+
+
+  Future<InterfaceResult> getSuggestionsList(String? lastId) async {
+    Uint8List? value = LocalStorage().get(LOCAL_TOKEN_KEY);
+    String token = utf8.decode(Uint8List.fromList(value!));
+    return await post('/suggestion/get', {'last_id': lastId}, token:token);
+  }
 }
