@@ -29,6 +29,62 @@ class _SignInPageState extends State<SignInPage> {
     Navigator.pushNamedAndRemoveUntil(context, '/forgetPassword', (r) => false);
   }
 
+  void _gotoSignUp(){}
+
+  @override
+  Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('Nutri Pilot')),
+    body: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                "Fuel Smart, Live Better",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+
+              AppTextField(controller: _userCtrl, label: "Email"),
+              const SizedBox(height: 12),
+              AppPasswordField(controller: _passCtrl, label: "Password"),
+              const SizedBox(height: 20),
+
+              FilledButton(
+                onPressed: _loading ? null : _submit,
+                child: _loading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Sign In'),
+              ),
+              const SizedBox(height: 10),
+
+              OutlinedButton(
+                onPressed: _loading ? null : _gotoSignUp,
+                child: const Text('Sign Up'),
+              ),
+              const SizedBox(height: 10),
+
+              TextButton(
+                onPressed: _loading ? null : _gotoForgetPassword,
+                child: const Text(
+                  "Forgot password?",
+                  style: TextStyle(fontSize: 14, color: Colors.blue),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/*
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,5 +112,5 @@ class _SignInPageState extends State<SignInPage> {
         ),
       ),
     );
-  }
+  }*/
 }
