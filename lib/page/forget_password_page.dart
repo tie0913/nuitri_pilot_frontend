@@ -89,21 +89,37 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     } else {
       String? res = await DI.I.authService.confirmPassword(email, otp, newPwd);
       if (res != null) {
-          DI.I.messageHandler.showMessage(res);
-          Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
+        DI.I.messageHandler.showMessage(res);
+        Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
       }
     }
   }
 
   List<Widget> get step1Controls => [
+    const Text(
+      "Forgot your password?",
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    ),
+    const SizedBox(height: 8),
+    const Text(
+      "Enter your email and we'll send you a one-time code.",
+      textAlign: TextAlign.center,
+    ),
+    const SizedBox(height: 24),
+
+    // 这里你可以继续用 TextField，也可以换成 AppTextField
     TextField(
       controller: _emailControl,
-      decoration: const InputDecoration(labelText: 'Email:'),
+      decoration: const InputDecoration(labelText: 'Email'),
+      keyboardType: TextInputType.emailAddress,
     ),
+
     const SizedBox(height: 12),
     if (_error != null)
       Text(_error!, style: const TextStyle(color: Colors.red)),
-    const SizedBox(height: 12),
+    const SizedBox(height: 20),
+
     FilledButton(
       onPressed: _loading ? null : _sendOTP,
       child: _loading
@@ -114,12 +130,43 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
             )
           : const Text('Get OTP'),
     ),
+    const SizedBox(height: 12),
+
+    // 🔙 返回登录按钮（步骤 1）
+    TextButton(
+      onPressed: _loading
+          ? null
+          : () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/signin',
+                (r) => false,
+              );
+            },
+      child: const Text("Back to Sign In"),
+    ),
   ];
 
   List<Widget> get step2Controls => [
+    const Text(
+      "Reset your password",
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    ),
+    const SizedBox(height: 8),
+    const Text(
+      "Enter the OTP and your new password.",
+      textAlign: TextAlign.center,
+    ),
+    const SizedBox(height: 24),
+
     AppTextField(controller: _otpControl, label: "OTP"),
+    const SizedBox(height: 12),
     AppPasswordField(controller: _newPwdControl, label: "New Password"),
+    const SizedBox(height: 12),
     AppPasswordField(controller: _confirmPwdControl, label: "Confirm Password"),
+    const SizedBox(height: 20),
+
     FilledButton(
       onPressed: _loading ? null : _resetPassword,
       child: _loading
@@ -129,6 +176,21 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : const Text('Reset Password'),
+    ),
+    const SizedBox(height: 12),
+
+    // 🔙 返回登录按钮（步骤 2）
+    TextButton(
+      onPressed: _loading
+          ? null
+          : () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/signin',
+                (r) => false,
+              );
+            },
+      child: const Text("Back to Sign In"),
     ),
   ];
 
@@ -143,12 +205,17 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Forget Password')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: _getWidgets(step),
+      appBar: AppBar(title: const Text('Nutri Pilot')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _getWidgets(step),
+            ),
+          ),
         ),
       ),
     );
