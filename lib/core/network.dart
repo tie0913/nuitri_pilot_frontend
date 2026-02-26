@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'dart:io';
 import 'dart:typed_data';
@@ -74,11 +75,15 @@ Future<InterfaceResult<dynamic>> post<T>(
     final isMultipart = body.values.any(_containsFile);
     final data = isMultipart ? _formDataFromBody(body) : body;
 
+    final timezone = await FlutterTimezone.getLocalTimezone();
     final resp = await connector.post(
       path,
       data: data,
       options: Options(
-        headers: {if (token != null) 'Authorization': token},
+        headers: {
+          if (token != null) 'Authorization': token,
+          'X-Timezone':timezone.identifier
+        },
         contentType: isMultipart ? 'multipart/form-data' : Headers.jsonContentType,
       ),
     );

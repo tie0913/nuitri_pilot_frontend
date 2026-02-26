@@ -8,7 +8,6 @@ import '../page/forget_password_page.dart';
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case '/':
       case '/home':
         return _guarded((_) => const HomePage()); // 受保护
       case '/signin':
