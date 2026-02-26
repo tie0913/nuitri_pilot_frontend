@@ -60,4 +60,8 @@ class AuthRepository {
       param
     );
   }
+
+  Future<InterfaceResult<dynamic>> varifyToken(String? token) async {
+      return await post('/auth/me', {}, token:token);
+  }
 }

@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
@@ -19,21 +17,23 @@ class AuthService{
   Future<bool> signIn(String email, String password) async {
     String? token = await repo.signIn(email: email, password: password);
     if(token != null){
-      Uint8List value = Uint8List.fromList(utf8.encode(token));
-      LocalStorage().put(LOCAL_TOKEN_KEY, value);
+      LocalStorage().put(LOCAL_TOKEN_KEY, token);
       return true;
     }
     return false;
   }
 
   Future<bool> signOut() async {
-    Uint8List? value = LocalStorage().get(LOCAL_TOKEN_KEY);
-    String token = utf8.decode(Uint8List.fromList(value!));
-    bool success = await repo.signOut(token);
-    if(success){
-      LocalStorage().del(LOCAL_TOKEN_KEY);
+    String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
+    if(token == null){
+        return true;
+    }else{
+      bool success = await repo.signOut(token);
+      if(success){
+        LocalStorage().del(LOCAL_TOKEN_KEY);
+      }
+      return success;
     }
-    return success;
   }
 
   Future<String?> requestOtp(String email, bool forget) async {
@@ -62,4 +62,14 @@ class AuthService{
     }
   }
 
+  Future<bool> varifyToken() async {
+    String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
+    InterfaceResult<dynamic> result = await repo.varifyToken(token);
+    if (DI.I.messageHandler.isErr(result)) {
+      DI.I.messageHandler.handleErr(result);
+      return false;
+    } else {
+      return true;
+    }
+  }
 }

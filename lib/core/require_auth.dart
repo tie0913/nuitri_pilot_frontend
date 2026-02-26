@@ -1,7 +1,6 @@
 // lib/core/require_auth.dart
 import 'package:flutter/material.dart';
-import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
-import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
+import 'package:nuitri_pilot_frontend/core/di.dart';
 
 /// 给需要保护的页面外面包一层 RequireAuth。
 /// 进入时统一执行鉴权（异步），未通过则跳 /signin。
@@ -27,7 +26,7 @@ class _RequireAuthState extends State<RequireAuth> {
   }
 
   Future<bool> hasSignedIn() async {
-    return LocalStorage().containsKey(LOCAL_TOKEN_KEY);
+    return await DI.I.authService.varifyToken();
   }
 
   @override

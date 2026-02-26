@@ -9,7 +9,7 @@ class MoreBody extends StatelessWidget {
     if (await context.confirm(message: "You are going to sign out")) {
       bool success = await DI.I.authService.signOut();
       if (success) {
-        Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
+        Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
       }
     }
   }

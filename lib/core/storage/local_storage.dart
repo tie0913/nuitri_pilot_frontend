@@ -1,8 +1,8 @@
-import 'dart:typed_data';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LocalStorage{
 
-  Map<String, Uint8List> cache = {};
+  final cache = FlutterSecureStorage();
 
   LocalStorage._internal();
 
@@ -12,11 +12,11 @@ class LocalStorage{
     return _instance;
   }
 
-  void put(String key, Uint8List value, {bool persist = false}) => cache.addAll({key: value});
+  void put(String key, String value, {bool persist = false}) => cache.write(key: key, value: value);
 
-  Uint8List? get(String key) => cache[key];
+  Future<String?> get(String key) => cache.read(key:key);
 
-  bool containsKey(String key) => cache.containsKey(key);
+  Future<bool> containsKey(String key) => cache.containsKey(key:key);
 
-  Uint8List? del(String key) => cache.remove(key);
+  Future<void> del(String key) => cache.delete(key: key);
 }

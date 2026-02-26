@@ -7,9 +7,12 @@ import 'package:path/path.dart' as p;
 
 final connector = Dio(
   BaseOptions(
+    // iPhone
     //baseUrl: 'http://localhost:5007',
-    //baseUrl: 'http://10.0.2.2:5007',
-    baseUrl: 'https://backend-production-aea9.up.railway.app',
+    // Android
+    baseUrl: 'http://10.0.2.2:5007',
+    // Online
+    //baseUrl: 'https://backend-production-aea9.up.railway.app',
     connectTimeout: const Duration(seconds: 8),
     receiveTimeout: const Duration(seconds: 300),
   ),
@@ -94,40 +97,6 @@ Future<InterfaceResult<dynamic>> post<T>(
   }
 }
 
-
-/*
- * Basic post method for networking
-Future<InterfaceResult<dynamic>> post<T>(
-  String path,
-  Map<String, dynamic> body,
-  {String? token}) async {
-  try {
-    final resp = await connector.post(
-      path,
-      data: body,
-      options: Options(
-        headers: {if (token != null) 'Authorization': token},
-      ),
-    );
-
-    final env = ApiEnvelope<T>.fromJson(resp.data);
-    /**
-     * 这里意味着后端执行给出了结果，有错就是业务错误了
-     * 所以逻辑出错了就返回业务错了，就返回业务错误。
-     * 业务成功就返回业务成功结果同时带着结果对象
-     */
-    if (env.success) {
-      return BizOk(env.data as T);
-    } else {
-      return mapBizError(env);
-    }
-  } on DioException catch (e) {
-    return mapDioError(e);
-  } catch (e) {
-    return NetworkErr(ErrorKind.unknown, -1, "Unknown Error $e");
-  }
-}
- */
 
 BizErr<T> mapBizError<T>(ApiEnvelope<T> env) {
   return BizErr(env.code, env.message);
