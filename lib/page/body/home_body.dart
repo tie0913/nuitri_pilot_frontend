@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart'; // 别忘记引入
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -58,13 +60,22 @@ class _HomeBodyState extends State<HomeBody> {
     if (mounted) setState(() {});
   }
 
+  
+  void _deleteRecord(FeedItem item) async {
+    bool res = await DI.I.suggestionSerivce.deleteRecordById(item.id);
+    if(res){
+      _items.remove(item);
+      setState((){});
+    }
+  }
   void _onScroll() {
     final pos = _scrollController.position;
     double offset = pos.pixels;
 
     if (offset > _lastOffset &&
         offset >= pos.maxScrollExtent - 200 &&
-        !_isLoadingMore) {
+        !_isLoadingMore &&
+        pos.userScrollDirection == ScrollDirection.reverse) {
       _fetchNextPage();
       _lastOffset = offset;
     }
@@ -87,7 +98,7 @@ class _HomeBodyState extends State<HomeBody> {
         return SizedBox(
           child: DraggableScrollableSheet(
             expand: false,
-            initialChildSize: 0.8, 
+            initialChildSize: 0.8,
             minChildSize: 0.4,
             maxChildSize: 0.9,
             snap: true,
@@ -229,9 +240,9 @@ class _HomeBodyState extends State<HomeBody> {
 
   Future<FeedItem?> _getSuggesstion(File file) async {
     FeedItem? newItem = await DI.I.suggestionSerivce.seekingSuggestion(file);
-    if(newItem != null){
+    if (newItem != null) {
       _items.insert(0, newItem);
-      setState((){});
+      setState(() {});
     }
     return newItem;
   }
@@ -239,13 +250,12 @@ class _HomeBodyState extends State<HomeBody> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _loadInitial,
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            SliverList(
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          SlidableAutoCloseBehavior(
+            child: SliverList(
               delegate: SliverChildBuilderDelegate((ctx, index) {
                 // 最后一项：专门用来放“加载更多 / 没有更多”状态
                 if (index == _items.length) {
@@ -280,16 +290,35 @@ class _HomeBodyState extends State<HomeBody> {
                 }
 
                 final item = _items[index];
-                return _FeedCard(
-                  item: item,
-                  onTap: () => _openItemDetail(item),
+                //return _FeedCard(item: item, onTap: () => _openItemDetail(item),)
+
+                return Slidable(
+                  key: ValueKey(item.id),
+                  endActionPane: ActionPane(
+                    motion: const DrawerMotion(),
+                    extentRatio: 0.2,
+                    children: [
+                      SlidableAction(
+                        onPressed: (_) {
+                          _deleteRecord(item);
+                        },
+                        icon: Icons.delete,
+                        backgroundColor: Colors.blueGrey,
+                        label: 'Delete',
+                      ),
+                    ],
+                  ),
+
+                  child: _FeedCard(
+                    item: item,
+                    onTap: () => _openItemDetail(item),
+                  ),
                 );
               }, childCount: _items.length + 1),
             ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
-        ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showImageSourceActionSheet,
@@ -300,7 +329,6 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 }
-
 
 class _FeedCard extends StatelessWidget {
   final FeedItem item;
@@ -329,7 +357,6 @@ class _FeedCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
                     // ⭐ 改动的地方
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -340,10 +367,9 @@ class _FeedCard extends StatelessWidget {
                         ),
                         Text(
                           formattedTime,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: Colors.grey),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -353,10 +379,9 @@ class _FeedCard extends StatelessWidget {
                       item.feedback.explaination,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Colors.grey[700]),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -370,7 +395,6 @@ class _FeedCard extends StatelessWidget {
     );
   }
 }
-
 
 class _FeedImage extends StatelessWidget {
   final FeedItem item;

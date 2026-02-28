@@ -17,4 +17,9 @@ class SuggestionRepo {
     String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
     return await post('/suggestion/get', {'last_id': lastId}, token:token);
   }
+
+  Future<InterfaceResult> deleteRecordById(String id) async {
+    String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
+    return await post('/suggestion/delete_by_id', {'id': id}, token: token);
+  }
 }

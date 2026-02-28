@@ -8,7 +8,7 @@ class WellnessBody extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // 四个分类
+      length: 2, 
       child: Column(
         children: [
           Material(
@@ -27,7 +27,6 @@ class WellnessBody extends StatelessWidget{
             ),
           ),
 
-          // 内容区域
           Expanded(
             child: TabBarView(
               physics: const BouncingScrollPhysics(),

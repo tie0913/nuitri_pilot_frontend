@@ -123,9 +123,8 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      child: FutureBuilder<WellnessCatagory?>(
+    return 
+      FutureBuilder<WellnessCatagory?>(
         future: _future,
         builder: (context, snap) {
           // 首屏加载
@@ -265,7 +264,6 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
             ],
           );
         },
-      ),
-    );
+      );
   }
 }

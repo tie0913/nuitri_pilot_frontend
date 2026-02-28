@@ -41,4 +41,14 @@ class SuggestionService {
     }
 
   }
+
+  Future<bool> deleteRecordById(String id) async {
+    InterfaceResult<dynamic> res = await repo.deleteRecordById(id);
+    if(DI.I.messageHandler.isErr(res)){
+      DI.I.messageHandler.handleErr(res);
+      return false;
+    }else{
+      return true;
+    }
+  }
 }
