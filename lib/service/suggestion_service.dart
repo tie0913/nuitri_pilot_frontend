@@ -35,7 +35,6 @@ class SuggestionService {
           list.add(FeedItem.fromJson(res.value[i]));
         }
         return list;
-        //return res.value.map((e) => FeedItem.fromJson(e)).toList();
       }
       return [];
     }

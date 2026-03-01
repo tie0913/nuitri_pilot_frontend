@@ -60,14 +60,14 @@ class _HomeBodyState extends State<HomeBody> {
     if (mounted) setState(() {});
   }
 
-  
   void _deleteRecord(FeedItem item) async {
     bool res = await DI.I.suggestionSerivce.deleteRecordById(item.id);
-    if(res){
+    if (res) {
       _items.remove(item);
-      setState((){});
+      setState(() {});
     }
   }
+
   void _onScroll() {
     final pos = _scrollController.position;
     double offset = pos.pixels;
@@ -134,7 +134,17 @@ class _HomeBodyState extends State<HomeBody> {
       builderWithScroll: (ctx, sc) {
         return _SuggestionSheetBody(
           scrollController: sc,
-          image: _FeedImage(item: item, size: 200),
+          image: Image.network(
+            item.path,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return Center(child: CircularProgressIndicator());
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Icon(Icons.broken_image);
+            },
+          ),
           score: item.mark,
           feedback: item.feedback.explaination,
           recommendation: item.recommendation,
@@ -357,7 +367,6 @@ class _FeedCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ⭐ 改动的地方
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

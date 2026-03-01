@@ -53,6 +53,7 @@ class FeedItem {
   final int mark;
   final String thumbnail;
   final DateTime time;
+  final String path;
   final Feedback feedback;
   final List<String> recommendation;
 
@@ -61,6 +62,7 @@ class FeedItem {
     required this.mark,
     required this.thumbnail,
     required this.time,
+    required this.path,
     required this.feedback,
     required this.recommendation
   });
@@ -69,7 +71,14 @@ class FeedItem {
 
     List<String> rr = List<String>.from(json['recommendation']);
     Feedback feedback = Feedback.fromJson(json['feedback']);
-    FeedItem item = FeedItem(id: json['_id'], mark:json['mark'], thumbnail: json['thumbnail'], time: DateTime.parse(json['time']).toLocal(), feedback: feedback, recommendation: rr);
+    FeedItem item = FeedItem(
+      id: json['_id'], 
+      mark:json['mark'], 
+      thumbnail: json['thumbnail'], 
+      time: DateTime.parse(json['time']).toLocal(), 
+      path: json.containsKey('path') ? json['path'] : "", 
+      feedback: feedback, 
+      recommendation: rr);
     return item;
   }
 }
