@@ -253,6 +253,8 @@ class _HomeBodyState extends State<HomeBody> {
     if (newItem != null) {
       _items.insert(0, newItem);
       setState(() {});
+    }else{
+      throw Exception("Error has been found");
     }
     return newItem;
   }

@@ -30,7 +30,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     if (EmailValidator.validate(email)) {
       return AppOk(email);
     } else {
-      return AppErr(message: "Email can not be empty");
+      return AppErr(message: "Email is illegal");
     }
   }
 
@@ -114,7 +114,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     ),
     const SizedBox(height: 24),
 
-    // 这里你可以继续用 TextField，也可以换成 AppTextField
+    // 这里可以继续用 TextField，也可以换成 AppTextField
     TextField(
       controller: _emailControl,
       decoration: const InputDecoration(labelText: 'Email'),
@@ -138,7 +138,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     ),
     const SizedBox(height: 12),
 
-    // 🔙 返回登录按钮（步骤 1）
+    //返回登录按钮（步骤 1）
     TextButton(
       onPressed: _loading
           ? null
@@ -185,7 +185,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     ),
     const SizedBox(height: 12),
 
-    // 🔙 返回登录按钮（步骤 2）
+    // 返回登录按钮（步骤 2）
     TextButton(
       onPressed: _loading
           ? null
