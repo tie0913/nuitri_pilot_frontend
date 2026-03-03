@@ -1,5 +1,6 @@
 // lib/core/require_auth.dart
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
 
 /// 给需要保护的页面外面包一层 RequireAuth。
@@ -19,41 +20,56 @@ class RequireAuth extends StatefulWidget {
 }
 
 class _RequireAuthState extends State<RequireAuth> {
+  late Future<Result<Error, bool>> _future;
+  bool _handled = false;
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<bool> hasSignedIn() async {
-    return await DI.I.authService.varifyToken();
+    _future = DI.I.authService.varifyToken();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: hasSignedIn(),
+    return FutureBuilder<Result<Error, bool>>(
+      future: _future,
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
-        /**
-         * 这里留一个口子，现在不管谁来都直接返回给需要的页面
-         * 未来这里要根据条件判断用户是否登录
-         */
+        final result = snap.data;
 
-        if (snap.data == true) {
-          return widget.builder(context);
-        } else {
-          // 未登录 → 重定向到 /signin
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              Navigator.of(context).pushReplacementNamed(widget.redirectTo);
+        // 防止重复执行副作用
+        if (!_handled) {
+          _handled = true;
+
+          if (result is Err) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              DI.I.messageHandler.doIfErr(result!);
+              Navigator.of(context)
+                  .pushReplacementNamed(widget.redirectTo);
+            });
+          } else if (result is OK<Error, bool>) {
+            if (!result.value) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                Navigator.of(context)
+                    .pushReplacementNamed(widget.redirectTo);
+              });
             }
-          });
-          return const SizedBox.shrink();
+          }
         }
+
+        // 如果成功登录
+        if (result is OK<Error, bool> && result.value == true) {
+          return widget.builder(context);
+        }
+
+        return const SizedBox.shrink();
       },
     );
   }

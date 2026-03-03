@@ -1,48 +1,38 @@
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
-import 'package:nuitri_pilot_frontend/core/di.dart';
 import 'package:nuitri_pilot_frontend/core/network.dart';
 
 class AuthRepository {
   AuthRepository();
 
-  Future<String?> signIn({required String email, required String password}) async {
+  Future<Result<Error, String?>> signIn({required String email, required String password}) async {
     Map<String, dynamic> param = {"email": email, "password": password};
-    InterfaceResult<dynamic> result = await post(
+    return await post(
       "/auth/sign-in",
       param,
+      decoder: (json) => json,
     );
-    if (DI.I.messageHandler.isErr(result)) {
-      DI.I.messageHandler.handleErr(result);
-      return null;
-    } else {
-      return result.value.toString();
-    }
   }
 
-  Future<bool> signOut(String token) async {
-    InterfaceResult<dynamic> result = await post(
+  Future<Result<Error, bool>> signOut(String token) async {
+    return await post(
       "/auth/sign-out",
       {},
       token:token,
+      decoder: (json) => json
     );
-    if (DI.I.messageHandler.isErr(result)) {
-      DI.I.messageHandler.handleErr(result);
-      return false;
-    } else {
-      return true;
-    }
   }
 
-  Future<InterfaceResult<dynamic>> requestOtp(
+  Future<Result<Error, String?>> requestOtp(
     String email, String bizId 
   ) async {
     return await post(
       '/auth/request-otp',
-      {"email": email, "biz_id": bizId}
+      {"email": email, "biz_id": bizId},
+      decoder: (json) => json
     );
   }
 
-  Future<InterfaceResult<dynamic>> confirmPassword(
+  Future<Result<Error, String?>> confirmPassword(
     String email,
     String otp,
     String newPwd,
@@ -57,11 +47,12 @@ class AuthRepository {
 
     return await post(
       '/auth/confirm-password',
-      param
+      param,
+      decoder: (json) => json
     );
   }
 
-  Future<InterfaceResult<dynamic>> varifyToken(String? token) async {
-      return await post('/auth/me', {}, token:token);
+  Future<Result<Error, bool>> varifyToken(String? token) async {
+      return await post('/auth/me', {}, token:token, decoder: (json) => json);
   }
 }

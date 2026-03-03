@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/build_context_extension.dart';
+import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
 
 class MoreBody extends StatelessWidget {
@@ -7,8 +8,8 @@ class MoreBody extends StatelessWidget {
 
   Future<void> _confirmAndLogout(BuildContext context) async {
     if (await context.confirm(message: "You are going to sign out")) {
-      bool success = await DI.I.authService.signOut();
-      if (success) {
+      Result<Error, bool> result = await DI.I.authService.signOut();
+      if(!DI.I.messageHandler.doIfErr(result)){
         Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
       }
     }

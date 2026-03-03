@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/widgets/text_field_widget.dart';
 import '../core/di.dart';
 
@@ -17,12 +18,15 @@ class _SignInPageState extends State<SignInPage> {
   bool _loading = false;
 
   Future<void> _submit() async {
+    final navigator = Navigator.of(context);
     setState(() { _loading = true;});
-    bool success = await DI.I.authService.signIn(_userCtrl.text.trim(), _passCtrl.text);
+    Result<Error, bool> result = await DI.I.authService.signIn(_userCtrl.text.trim(), _passCtrl.text);
+
     setState(() => _loading = false);
-    if(success){
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+    if(!DI.I.messageHandler.doIfErr(result)){
+      navigator.pushNamedAndRemoveUntil('/home', (r) => false);
     }
+
   }
 
   void _gotoForgetPassword() {

@@ -4,22 +4,34 @@ import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/network.dart';
 import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
 import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
+import 'package:nuitri_pilot_frontend/data/data.dart';
 
 class SuggestionRepo {
 
-  Future<InterfaceResult<dynamic>> seekingSuggestion(File file) async {
+  Future<Result<Error, FeedItem>> seekingSuggestion(File file) async {
     String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
-    return await post('/suggestion/ask', {'img': file}, token: token);
+    return await post('/suggestion/ask', {'img': file}, token: token, decoder:(json) => FeedItem.fromJson(json));
   }
 
-
-  Future<InterfaceResult> getSuggestionsList(String? lastId) async {
+  Future<Result<Error, List<FeedItem>>> getSuggestionsList(String? lastId) async {
     String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
-    return await post('/suggestion/get', {'last_id': lastId}, token:token);
+    Result<Error, List<FeedItem>> result = await post('/suggestion/get', {'last_id': lastId}, token:token,
+    decoder: (json) {
+      if(json is List){
+        List<FeedItem> list = [];
+        for(int i = 0; i < json.length; i++){
+          list.add(FeedItem.fromJson(json[i]));
+        }
+        return list;
+      }else{
+        return List.empty();
+      }
+    });
+    return result;
   }
 
-  Future<InterfaceResult> deleteRecordById(String id) async {
+  Future<Result<Error, bool>> deleteRecordById(String id) async {
     String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
-    return await post('/suggestion/delete_by_id', {'id': id}, token: token);
+    return await post('/suggestion/delete_by_id', {'id': id}, token: token, decoder: (json) => json);
   }
 }

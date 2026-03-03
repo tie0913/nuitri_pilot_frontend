@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
-import 'package:nuitri_pilot_frontend/core/di.dart';
 import 'package:nuitri_pilot_frontend/data/data.dart';
 import 'package:nuitri_pilot_frontend/repo/suggestion_repo.dart';
 
@@ -9,45 +8,17 @@ class SuggestionService {
   SuggestionRepo repo;
   SuggestionService(this.repo);
 
-  Future<FeedItem?> seekingSuggestion(File file) async {
-    InterfaceResult<dynamic> res = await repo.seekingSuggestion(file);
-    if (DI.I.messageHandler.isErr(res)) {
-      DI.I.messageHandler.handleErr(res);
-      return null;
-    } else {
-      return FeedItem.fromJson(res.value!);
-    }
+  Future<Result<Error, FeedItem?>> seekingSuggestion(File file) async {
+    return await repo.seekingSuggestion(file);
   }
 
 
-  Future<List<FeedItem>> getSuggestionsList(String? lastId) async {
-    InterfaceResult<dynamic> res = await repo.getSuggestionsList(lastId);
-
-    if (DI.I.messageHandler.isErr(res)) {
-      DI.I.messageHandler.handleErr(res);
-      return [];
-    } else {
-      if(res.value == null){
-        return [];
-      }else if(res.value is List){
-        List<FeedItem> list = [];
-        for(int i = 0; i < res.value.length; i++){
-          list.add(FeedItem.fromJson(res.value[i]));
-        }
-        return list;
-      }
-      return [];
-    }
-
+  Future<Result<Error, List<FeedItem>?>> getSuggestionsList(String? lastId) async {
+    Result<Error, List<FeedItem>?> res = await repo.getSuggestionsList(lastId);
+    return res;
   }
 
-  Future<bool> deleteRecordById(String id) async {
-    InterfaceResult<dynamic> res = await repo.deleteRecordById(id);
-    if(DI.I.messageHandler.isErr(res)){
-      DI.I.messageHandler.handleErr(res);
-      return false;
-    }else{
-      return true;
-    }
+  Future<Result<Error, bool>> deleteRecordById(String id) async {
+    return await repo.deleteRecordById(id);
   }
 }

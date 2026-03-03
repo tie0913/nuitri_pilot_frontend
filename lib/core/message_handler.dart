@@ -3,15 +3,8 @@ import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 abstract interface class MessageHandler {
-  /*
-   * 公共的错误处理器，只要是错误，就可以用这个方法来发布全局提示
-   */
-  void handleErr(Result e);
 
-  /*
-   * 判断一个Result是否时Err
-   */
-  bool isErr(Result res);
+  bool doIfErr(Result<Error, dynamic> result);
 
   /*
    * 显示一个信息
@@ -28,20 +21,22 @@ class GlobalMessageHandler implements MessageHandler {
     required this.messengerKey,
   });
 
-  @override
-  bool isErr(Result res) => res is AppErr || res is BizErr || res is NetworkErr;
-
   /// 前后端错误提示分离
   ///
   /// 因为前端多为校验错误，后端一般业务进行不下去了，所以后端用弹出对话框，前端用顶部滑出
   @override
-  void handleErr(Result e) {
-    final message = getErrorMessage(e);
-    if (e is AppErr) {
-      showAppErr(message);
-    } else {
-      showBackendErr(message);
+  bool doIfErr(Result<Error, dynamic> result) {
+    if(result is Err) {
+      Err err = (result as Err);
+      final message = getErrorMessage(err.error);
+      if(err.error is AppError){
+        showAppErr(message);
+      }else{
+        showBackendErr(message);
+      }
+      return true;
     }
+    return false;
   }
 
   void showAppErr(String message) {
@@ -144,15 +139,13 @@ class GlobalMessageHandler implements MessageHandler {
     ).show(ctx);
   }
 
-  String getErrorMessage(Result e) {
-    if (e is AppErr) {
+  String getErrorMessage(Error e) {
+    if (e is AppError) {
       return e.message;
-    } else if (e is BizErr) {
+    } else if(e is BackendError){
       return e.message;
-    } else if (e is NetworkErr) {
-      return e.message;
-    } else {
-      return "Unkown Error";
+    }else{
+      return "Unknow Error Please Contact Administrator";
     }
   }
 }

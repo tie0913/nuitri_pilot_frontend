@@ -1,16 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intl/intl.dart'; // 别忘记引入
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+
+import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
 import 'package:nuitri_pilot_frontend/data/data.dart';
 
 class HomeBody extends StatefulWidget {
   const HomeBody({super.key});
+
   @override
   State<HomeBody> createState() => _HomeBodyState();
 }
@@ -22,6 +26,7 @@ class _HomeBodyState extends State<HomeBody> {
   bool _isLoadingMore = false;
   double _lastOffset = 0;
   bool _hasMore = true;
+
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -48,29 +53,42 @@ class _HomeBodyState extends State<HomeBody> {
     _isLoadingMore = true;
     setState(() {});
 
-    String? lastId = _items.isNotEmpty ? _items.last.id : null;
-    final newItems = await DI.I.suggestionSerivce.getSuggestionsList(lastId);
-    if (newItems.isNotEmpty) {
-      _items.addAll(newItems);
-      _hasMore = true;
-    } else {
-      _hasMore = false;
+    final String? lastId = _items.isNotEmpty ? _items.last.id : null;
+
+    final Result<Error, List<FeedItem>?> result =
+        await DI.I.suggestionSerivce.getSuggestionsList(lastId);
+
+    if (!DI.I.messageHandler.doIfErr(result)) {
+      final ok = result as OK<Error, List<FeedItem>?>;
+      final list = ok.value ?? <FeedItem>[];
+
+      if (list.isEmpty) {
+        _hasMore = false;
+      } else {
+        _items.addAll(list);
+        _hasMore = true;
+      }
     }
+
     _isLoadingMore = false;
     if (mounted) setState(() {});
   }
 
-  void _deleteRecord(FeedItem item) async {
-    bool res = await DI.I.suggestionSerivce.deleteRecordById(item.id);
-    if (res) {
-      _items.remove(item);
-      setState(() {});
+  Future<void> _deleteRecord(FeedItem item) async {
+    final Result<Error, bool> result =
+        await DI.I.suggestionSerivce.deleteRecordById(item.id);
+
+    if (!DI.I.messageHandler.doIfErr(result)) {
+      if ((result as OK<Error, bool>).value) {
+        _items.remove(item);
+        if (mounted) setState(() {});
+      }
     }
   }
 
   void _onScroll() {
     final pos = _scrollController.position;
-    double offset = pos.pixels;
+    final double offset = pos.pixels;
 
     if (offset > _lastOffset &&
         offset >= pos.maxScrollExtent - 200 &&
@@ -81,9 +99,13 @@ class _HomeBodyState extends State<HomeBody> {
     }
   }
 
+  // =========================
+  // Modal helpers
+  // =========================
+
   Future<T?> _showDraggableModal<T>({
     required Widget Function(BuildContext ctx, ScrollController sc)
-    builderWithScroll,
+        builderWithScroll,
     bool enableDragToClose = true,
   }) {
     return showModalBottomSheet<T>(
@@ -94,38 +116,36 @@ class _HomeBodyState extends State<HomeBody> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) {
-        return SizedBox(
-          child: DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.8,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
-            snap: true,
-            builder: (sheetCtx, scrollController) {
-              return Column(
-                children: [
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: builderWithScroll(sheetCtx, scrollController),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
       enableDrag: enableDragToClose,
       isDismissible: enableDragToClose,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.8,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          snap: false, // ✅ 关闭 snap，避免 pop 时抖一下
+          builder: (sheetCtx, scrollController) {
+            return Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: builderWithScroll(sheetCtx, scrollController),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -139,10 +159,10 @@ class _HomeBodyState extends State<HomeBody> {
             fit: BoxFit.cover,
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             },
             errorBuilder: (context, error, stackTrace) {
-              return Icon(Icons.broken_image);
+              return const Icon(Icons.broken_image);
             },
           ),
           score: item.mark,
@@ -152,6 +172,10 @@ class _HomeBodyState extends State<HomeBody> {
       },
     );
   }
+
+  // =========================
+  // Image source picker
+  // =========================
 
   void _showImageSourceActionSheet() {
     showModalBottomSheet(
@@ -201,63 +225,67 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
+  // =========================
+  // Upload flow (重构后的核心)
+  // =========================
+
   Future<void> _startUploadFlow(XFile xfile) async {
     final file = File(xfile.path);
 
+    // 1) 先弹一个“不可拖拽不可关闭”的 loading modal（避免 DraggableSheet 动画冲突）
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: false,
+      isDismissible: false,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _UploadingView(file: file),
+    );
+
+    // 2) await 后端
+    final Result<Error, FeedItem?> result = await _getSuggesstion(file);
+
+    if (!mounted) return;
+
+    // 3) 关掉 loading modal（这里 context 一定在）
+    Navigator.of(context).pop();
+
+    // 4) 失败：弹错
+    if (result is Err) {
+      DI.I.messageHandler.doIfErr(result);
+      return;
+    }
+
+    // 5) 成功：插入列表 + 打开结果 draggable modal
+    final FeedItem item = (result as OK<Error, FeedItem>).value;
+
+    _items.insert(0, item);
+    setState(() {});
+
     _showDraggableModal(
       builderWithScroll: (ctx, sc) {
-        return FutureBuilder<FeedItem?>(
-          future: _getSuggesstion(file),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return ListView(
-                controller: sc,
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                children: [
-                  Text(
-                    'Analyzing...',
-                    style: Theme.of(ctx).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(file, fit: BoxFit.cover, height: 200),
-                  ),
-                  const SizedBox(height: 16),
-                  const LinearProgressIndicator(),
-                  const SizedBox(height: 8),
-                  Text(
-                    'AI is working, please hold on ...',
-                    style: Theme.of(ctx).textTheme.bodyMedium,
-                  ),
-                ],
-              );
-            }
-
-            final result = snapshot.data!;
-            return _SuggestionSheetBody(
-              scrollController: sc,
-              image: Image.file(file, fit: BoxFit.cover),
-              score: result.mark,
-              feedback: result.feedback.explaination,
-              recommendation: result.recommendation,
-            );
-          },
+        return _SuggestionSheetBody(
+          scrollController: sc,
+          image: Image.file(file, fit: BoxFit.cover),
+          score: item.mark,
+          feedback: item.feedback.explaination,
+          recommendation: item.recommendation,
         );
       },
     );
   }
 
-  Future<FeedItem?> _getSuggesstion(File file) async {
-    FeedItem? newItem = await DI.I.suggestionSerivce.seekingSuggestion(file);
-    if (newItem != null) {
-      _items.insert(0, newItem);
-      setState(() {});
-    }else{
-      throw Exception("Error has been found");
-    }
-    return newItem;
+  Future<Result<Error, FeedItem?>> _getSuggesstion(File file) async {
+    return await DI.I.suggestionSerivce.seekingSuggestion(file);
   }
+
+  // =========================
+  // UI
+  // =========================
 
   @override
   Widget build(BuildContext context) {
@@ -268,65 +296,64 @@ class _HomeBodyState extends State<HomeBody> {
           const SliverToBoxAdapter(child: SizedBox(height: 12)),
           SlidableAutoCloseBehavior(
             child: SliverList(
-              delegate: SliverChildBuilderDelegate((ctx, index) {
-                // 最后一项：专门用来放“加载更多 / 没有更多”状态
-                if (index == _items.length) {
-                  // 1）正在加载更多：显示圈圈
-                  if (_isLoadingMore) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(),
+              delegate: SliverChildBuilderDelegate(
+                (ctx, index) {
+                  // footer item
+                  if (index == _items.length) {
+                    if (_isLoadingMore) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(),
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
+
+                    if (!_hasMore) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            'You are reaching my Bottom Line!',
+                            style: Theme.of(ctx)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return const SizedBox.shrink();
                   }
 
-                  if (!_hasMore) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: Text(
-                          'You are reaching my Bottom Line!',
-                          style: Theme.of(
-                            ctx,
-                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  final item = _items[index];
+
+                  return Slidable(
+                    key: ValueKey(item.id),
+                    endActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.2,
+                      children: [
+                        SlidableAction(
+                          onPressed: (_) => _deleteRecord(item),
+                          icon: Icons.delete,
+                          backgroundColor: Colors.blueGrey,
+                          label: 'Delete',
                         ),
-                      ),
-                    );
-                  }
-
-                  return const SizedBox.shrink();
-                }
-
-                final item = _items[index];
-                //return _FeedCard(item: item, onTap: () => _openItemDetail(item),)
-
-                return Slidable(
-                  key: ValueKey(item.id),
-                  endActionPane: ActionPane(
-                    motion: const DrawerMotion(),
-                    extentRatio: 0.2,
-                    children: [
-                      SlidableAction(
-                        onPressed: (_) {
-                          _deleteRecord(item);
-                        },
-                        icon: Icons.delete,
-                        backgroundColor: Colors.blueGrey,
-                        label: 'Delete',
-                      ),
-                    ],
-                  ),
-
-                  child: _FeedCard(
-                    item: item,
-                    onTap: () => _openItemDetail(item),
-                  ),
-                );
-              }, childCount: _items.length + 1),
+                      ],
+                    ),
+                    child: _FeedCard(
+                      item: item,
+                      onTap: () => _openItemDetail(item),
+                    ),
+                  );
+                },
+                childCount: _items.length + 1,
+              ),
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -341,6 +368,10 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 }
+
+// =========================
+// Widgets
+// =========================
 
 class _FeedCard extends StatelessWidget {
   final FeedItem item;
@@ -378,26 +409,26 @@ class _FeedCard extends StatelessWidget {
                         ),
                         Text(
                           formattedTime,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.grey),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 4),
                     Text(
                       item.feedback.explaination,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.grey[700]),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(width: 12),
             ],
           ),
@@ -430,6 +461,7 @@ class _FeedImage extends StatelessWidget {
 
 class _ResultCard extends StatelessWidget {
   final String text;
+
   const _ResultCard({required this.text});
 
   @override
@@ -468,23 +500,17 @@ class _SuggestionSheetBody extends StatelessWidget {
       children: [
         Text('Suggestions', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(height: 200, child: image),
         ),
-
         const SizedBox(height: 16),
         _ResultCard(text: 'Score: $score'),
         const SizedBox(height: 8),
         _ResultCard(text: 'Feedback: $feedback'),
         const SizedBox(height: 12),
-
         if (recommendation.isNotEmpty) ...[
-          Text(
-            'Recommendations',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Recommendations', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           ...recommendation.map(
             (r) => Padding(
@@ -494,23 +520,57 @@ class _SuggestionSheetBody extends StatelessWidget {
                 children: [
                   const Text('• '),
                   Expanded(
-                    child: Text(
-                      r,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                    child: Text(r, style: Theme.of(context).textTheme.bodyMedium),
                   ),
                 ],
               ),
             ),
           ),
         ],
-
         const SizedBox(height: 24),
         FilledButton(
           onPressed: () => Navigator.of(context).maybePop(),
           child: const Text('Done'),
         ),
       ],
+    );
+  }
+}
+
+/// ✅ 新增：上传中视图（非 draggable，不会 pop 抖动）
+class _UploadingView extends StatelessWidget {
+  final File file;
+
+  const _UploadingView({required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Analyzing...',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(file, fit: BoxFit.cover, height: 200),
+            ),
+            const SizedBox(height: 16),
+            const LinearProgressIndicator(),
+            const SizedBox(height: 8),
+            Text(
+              'AI is working, please hold on ...',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
     );
   }
 }

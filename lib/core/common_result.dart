@@ -1,61 +1,36 @@
-enum ErrorKind {
-  network,
-  unauthorized,
-  forbidden,
-  notFound,
-  rateLimited,
-  server,
-  validation,
-  business,
-  unknown,
-}
-
 /*
  * Parent Class of all the Results 
+ * E is Error
+ * T is Result
  */
-sealed class Result<T> {
-  const Result();
+sealed class Result<E, T> {}
+
+class OK<E, T> extends Result<E, T>{
+  final T value;
+  OK(this.value);
 }
 
-/*
- * Application inner result
- */
-class AppResult<T> extends Result<T> {
-  final T? value;
-  const AppResult(this.value);
+class Err<E, T> extends Result<E, T>{
+  final E error;
+  Err(this.error);
 }
 
-class AppOk<T> extends AppResult<T> {
-  const AppOk(super.value);
-}
-
-class AppErr<T> extends AppResult<T> {
+class Error{
   final String message;
-  const AppErr({required this.message}) : super(null);
+  Error(this.message);
 }
 
-/*
- * Parent Class of all the InterfaceResult
- * Which means this is the abstract result coming from backend http interfaces.
- */
-class InterfaceResult<T> extends Result<T> {
-  final T? value;
-  const InterfaceResult(this.value);
-}
-
-class BizOk<T> extends InterfaceResult<T> {
-  const BizOk(super.value);
-}
-
-class BizErr<T> extends InterfaceResult<T> {
+class BackendError extends Error{
   final int code;
-  final String message;
-  const BizErr(this.code, this.message) : super(null);
+  BackendError(this.code, super.message);
 }
 
-class NetworkErr<T> extends InterfaceResult<T> {
-  final ErrorKind kind;
-  final int? httpStatus;
-  final String message;
-  const NetworkErr(this.kind, this.httpStatus, this.message):super(null);
+class AppError extends Error{
+  AppError(super.message);
 }
+
+class NetworkErr extends Error {
+  final int httpStatus;
+  NetworkErr(this.httpStatus, super.message);
+}
+

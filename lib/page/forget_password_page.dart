@@ -25,30 +25,30 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
   final _confirmPwdControl = TextEditingController();
   
 
-  AppResult<String> _validateEmail(String email) {
+  Result<Error, String> _validateEmail(String email) {
     
     if (EmailValidator.validate(email)) {
-      return AppOk(email);
+      return OK(email);
     } else {
-      return AppErr(message: "Email is illegal");
+      return Err(AppError("Email is illegal"));
     }
   }
 
-  AppResult<Map<String, dynamic>> _validateReset(
+  Result<Error, Map<String, dynamic>> _validateReset(
     String otp,
     String newPwd,
     String confirmPwd,
   ) {
     if (otp.isNullOrBlankOrEmpty) {
-      return AppErr(message: "OTP can not be empty");
+      return Err(AppError("OTP can not be empty"));
     } else if (newPwd.isNullOrBlankOrEmpty) {
-      return AppErr(message: "New Password can bot be empty");
+      return Err(AppError("New Password can bot be empty"));
     } else if (confirmPwd.isNullOrBlankOrEmpty) {
-      return AppErr(message: "Confirm Password can not be empty");
+      return Err(AppError("Confirm Password can not be empty"));
     } else if (newPwd != confirmPwd) {
-      return AppErr(message: "New Password must equal to Confirm Password");
+      return Err(AppError("New Password must equal to Confirm Password"));
     } else {
-      return AppOk(<String, dynamic>{
+      return OK(<String, dynamic>{
         "otp": otp,
         "newPwd": newPwd,
         "confirmPwd": confirmPwd,
@@ -62,12 +62,10 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     });
 
     String email = _emailControl.text;
-    AppResult<String> validatingResult = _validateEmail(email);
-    if (DI.I.messageHandler.isErr(validatingResult)) {
-      DI.I.messageHandler.handleErr(validatingResult);
-    } else {
-      String? res = await DI.I.authService.requestOtp(email, widget.forget);
-      if (res != null) {
+    Result<Error, String> validatingResult = _validateEmail(email);
+    if (!DI.I.messageHandler.doIfErr(validatingResult)) {
+      Result<Error, String?> res = await DI.I.authService.requestOtp(email, widget.forget);
+      if(!DI.I.messageHandler.doIfErr(res)){
         setState(() {
           step = 2;
         });
@@ -84,17 +82,15 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     String newPwd = _newPwdControl.text;
     String confirmPwd = _confirmPwdControl.text;
 
-    AppResult<Map<String, dynamic>> validateRes = _validateReset(
+    Result<Error, Map<String, dynamic>> validateRes = _validateReset(
       otp,
       newPwd,
       confirmPwd,
     );
-    if (DI.I.messageHandler.isErr(validateRes)) {
-      DI.I.messageHandler.handleErr(validateRes);
-    } else {
-      String? res = await DI.I.authService.confirmPassword(email, otp, newPwd, widget.forget);
-      if (res != null) {
-        DI.I.messageHandler.showMessage(res);
+    if (!DI.I.messageHandler.doIfErr(validateRes)) {
+      Result<Error, String?> res = await DI.I.authService.confirmPassword(email, otp, newPwd, widget.forget);
+      if(!DI.I.messageHandler.doIfErr(res)){
+        DI.I.messageHandler.showMessage((res as OK).value);
         Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
       }
     }

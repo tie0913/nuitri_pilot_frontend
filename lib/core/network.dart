@@ -66,10 +66,11 @@ FormData _formDataFromBody(Map<String, dynamic> body) {
  * 如果调用方在body里放了文件，那么就自动变为 表单提交
  * 否则就是使用application/json类型协议
  */
-Future<InterfaceResult<dynamic>> post<T>(
+Future<Result<Error, T>> post<T>(
   String path,
   Map<String, dynamic> body, {
   String? token,
+  required T Function(dynamic json) decoder
 }) async {
   try {
     final isMultipart = body.values.any(_containsFile);
@@ -88,51 +89,44 @@ Future<InterfaceResult<dynamic>> post<T>(
       ),
     );
 
-    final env = ApiEnvelope<T>.fromJson(resp.data);
+    final env = ApiEnvelope<T>.fromJson(resp.data, decoder);
 
     if (env.success) {
-      return BizOk(env.data as T);
+      return OK(env.data!);
     } else {
-      return mapBizError(env);
+      return Err(BackendError(env.code, env.message));
     }
   } on DioException catch (e) {
-    return mapDioError(e);
+    return Err(mapDioError(e));
   } catch (e) {
-    return NetworkErr(ErrorKind.unknown, -1, "Unknown Error $e");
+    return Err(NetworkErr(500, "Unknown Server Error"));
   }
 }
 
-
-BizErr<T> mapBizError<T>(ApiEnvelope<T> env) {
-  return BizErr(env.code, env.message);
-}
-
-NetworkErr<T> mapDioError<T>(DioException e) {
+NetworkErr mapDioError(DioException e) {
   int? sc = e.response?.statusCode;
 
   if (e.type == DioExceptionType.connectionTimeout ||
       e.type == DioExceptionType.sendTimeout ||
       e.type == DioExceptionType.receiveTimeout) {
-    return NetworkErr(ErrorKind.network, sc, "Timeout");
+    return NetworkErr(504, "Timeout");
   }
 
   if (e.type == DioExceptionType.connectionError) {
-    return NetworkErr(ErrorKind.network, sc, "Cannot connect to the Server");
+    return NetworkErr(505, "Cannot connect to the Server");
   }
 
-  return switch (sc) {
-    401 => NetworkErr(ErrorKind.unauthorized, sc, "Unauthorized"),
-    403 => NetworkErr(ErrorKind.forbidden, sc, "Forbiden"),
-    404 => NetworkErr(ErrorKind.notFound, sc, "Resources not Exist"),
-    422 => NetworkErr(ErrorKind.validation, sc, "Illegal Parameters"),
-    429 => NetworkErr(ErrorKind.rateLimited, sc, "Too many times"),
-    != null && >= 500 => NetworkErr(ErrorKind.server, sc, "Server Error"),
-    _ => NetworkErr(
-      ErrorKind.unknown,
-      sc,
-      e.message ?? "Unknown Network Error",
-    ),
+  String errorMsg = switch (sc) {
+    401 => "Unauthorized",
+    403 => "Forbiden",
+    404 => "Resources not Exist",
+    422 => "Illegal Parameters",
+    429 => "Too many times",
+    != null && >= 500 => "Unknown Server Error",
+    null|| int() => "Unknow Network Erro",
   };
+
+  return NetworkErr(sc??500, errorMsg);
 }
 
 class ApiEnvelope<T> {
@@ -145,17 +139,23 @@ class ApiEnvelope<T> {
     required this.success,
     required this.code,
     required this.message,
-    required this.data,
+    this.data
   });
 
-  factory ApiEnvelope.fromJson(
-    Map<String, dynamic> json
+
+   factory ApiEnvelope.fromJson(
+    Map<String, dynamic> json,
+    T Function(dynamic json) decoder,
   ) {
-    return ApiEnvelope(
-      success: json['success'],
-      code: json['code'],
-      message: json['message'],
-      data: json['data'] 
+    final bool success = json['success'] ?? false;
+
+    return ApiEnvelope<T>(
+      success: success,
+      code: json['code'] ?? 0,
+      message: json['message'] ?? '',
+      data: success && json['data'] != null
+          ? decoder(json['data'])
+          : null,
     );
   }
 }
