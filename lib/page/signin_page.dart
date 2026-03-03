@@ -23,7 +23,7 @@ class _SignInPageState extends State<SignInPage> {
     Result<Error, bool> result = await DI.I.authService.signIn(_userCtrl.text.trim(), _passCtrl.text);
 
     setState(() => _loading = false);
-    if(!DI.I.messageHandler.doIfErr(result)){
+    if(!await DI.I.messageHandler.doIfErr(result)){
       navigator.pushNamedAndRemoveUntil('/home', (r) => false);
     }
 

@@ -1,2 +1,3 @@
 
 const LOCAL_TOKEN_KEY = "LOCAL_TOKEN_KEY";
+const UUID_KEY = "UUID_KEY";

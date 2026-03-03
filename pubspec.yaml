@@ -50,6 +50,7 @@ dependencies:
   flutter_timezone: ^5.0.1
   flutter_slidable: ^4.0.3
   another_flushbar: ^1.12.32
+  uuid: ^4.5.3
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

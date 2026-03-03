@@ -9,7 +9,7 @@ class MoreBody extends StatelessWidget {
   Future<void> _confirmAndLogout(BuildContext context) async {
     if (await context.confirm(message: "You are going to sign out")) {
       Result<Error, bool> result = await DI.I.authService.signOut();
-      if(!DI.I.messageHandler.doIfErr(result)){
+      if(!await DI.I.messageHandler.doIfErr(result)){
         Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
       }
     }

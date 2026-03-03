@@ -38,7 +38,7 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
     if (!mounted) return;
 
-    if (DI.I.messageHandler.doIfErr(result)) {
+    if (await DI.I.messageHandler.doIfErr(result)) {
       setState(() {
         _loading = false;
         _error = true;
@@ -116,7 +116,7 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
     if (!mounted) return;
 
-    if (!DI.I.messageHandler.doIfErr(result)) {
+    if (!await DI.I.messageHandler.doIfErr(result)) {
       final created = (result as OK).value;
 
       setState(() {
@@ -138,7 +138,7 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
     if (!mounted) return;
 
-    if (!DI.I.messageHandler.doIfErr(result)) {
+    if (!await DI.I.messageHandler.doIfErr(result)) {
       setState(() => _dirty = false);
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -58,7 +58,7 @@ class _HomeBodyState extends State<HomeBody> {
     final Result<Error, List<FeedItem>?> result =
         await DI.I.suggestionSerivce.getSuggestionsList(lastId);
 
-    if (!DI.I.messageHandler.doIfErr(result)) {
+    if (!await DI.I.messageHandler.doIfErr(result)) {
       final ok = result as OK<Error, List<FeedItem>?>;
       final list = ok.value ?? <FeedItem>[];
 
@@ -78,7 +78,7 @@ class _HomeBodyState extends State<HomeBody> {
     final Result<Error, bool> result =
         await DI.I.suggestionSerivce.deleteRecordById(item.id);
 
-    if (!DI.I.messageHandler.doIfErr(result)) {
+    if (!await DI.I.messageHandler.doIfErr(result)) {
       if ((result as OK<Error, bool>).value) {
         _items.remove(item);
         if (mounted) setState(() {});

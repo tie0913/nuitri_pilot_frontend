@@ -3,8 +3,7 @@ import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 abstract interface class MessageHandler {
-
-  bool doIfErr(Result<Error, dynamic> result);
+  Future<bool> doIfErr(Result<Error, dynamic> result);
 
   /*
    * 显示一个信息
@@ -25,14 +24,23 @@ class GlobalMessageHandler implements MessageHandler {
   ///
   /// 因为前端多为校验错误，后端一般业务进行不下去了，所以后端用弹出对话框，前端用顶部滑出
   @override
-  bool doIfErr(Result<Error, dynamic> result) {
-    if(result is Err) {
+  Future<bool> doIfErr(Result<Error, dynamic> result) async {
+    if (result is Err) {
       Err err = (result as Err);
       final message = getErrorMessage(err.error);
-      if(err.error is AppError){
+      if (err.error is AppError) {
         showAppErr(message);
-      }else{
-        showBackendErr(message);
+      } else {
+        await showBackendErr(message);
+
+        if (err.error is NetworkErr) {
+          if ((err.error as NetworkErr).httpStatus == 401) {
+            navigatorKey.currentState?.pushNamedAndRemoveUntil(
+              '/signin',
+              (route) => false,
+            );
+          }
+        }
       }
       return true;
     }
@@ -52,11 +60,11 @@ class GlobalMessageHandler implements MessageHandler {
     ).show(ctx);
   }
 
-  void showBackendErr(String message) {
+  Future<void> showBackendErr(String message) async {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
 
-    showDialog(
+    return showDialog(
       context: ctx,
       barrierDismissible: false,
       builder: (_) => Dialog(
@@ -87,7 +95,7 @@ class GlobalMessageHandler implements MessageHandler {
 
                 /// 标题
                 const Text(
-                  "Something went wrong",
+                  "Error",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
@@ -142,9 +150,9 @@ class GlobalMessageHandler implements MessageHandler {
   String getErrorMessage(Error e) {
     if (e is AppError) {
       return e.message;
-    } else if(e is BackendError){
+    } else if (e is BackendError || e is NetworkErr) {
       return e.message;
-    }else{
+    } else {
       return "Unknow Error Please Contact Administrator";
     }
   }

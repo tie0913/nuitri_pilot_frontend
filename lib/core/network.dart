@@ -4,6 +4,8 @@ import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart'; // 可选：设置 contentType 用
+import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
+import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
 import 'package:path/path.dart' as p;
 
 final connector = Dio(
@@ -18,7 +20,6 @@ final connector = Dio(
     receiveTimeout: const Duration(seconds: 300),
   ),
 );
-
 
 /// 判断 body 里是否含有“需要 multipart”的值
 bool _containsFile(dynamic v) {
@@ -70,7 +71,7 @@ Future<Result<Error, T>> post<T>(
   String path,
   Map<String, dynamic> body, {
   String? token,
-  required T Function(dynamic json) decoder
+  required T Function(dynamic json) decoder,
 }) async {
   try {
     final isMultipart = body.values.any(_containsFile);
@@ -83,9 +84,12 @@ Future<Result<Error, T>> post<T>(
       options: Options(
         headers: {
           if (token != null) 'Authorization': token,
-          'X-Timezone':timezone.identifier
+          'X-Timezone': timezone.identifier,
+          'UID': await LocalStorage().get(UUID_KEY),
         },
-        contentType: isMultipart ? 'multipart/form-data' : Headers.jsonContentType,
+        contentType: isMultipart
+            ? 'multipart/form-data'
+            : Headers.jsonContentType,
       ),
     );
 
@@ -104,29 +108,51 @@ Future<Result<Error, T>> post<T>(
 }
 
 NetworkErr mapDioError(DioException e) {
-  int? sc = e.response?.statusCode;
+  final response = e.response;
+  final int? sc = response?.statusCode;
 
+  // ① 超时错误
   if (e.type == DioExceptionType.connectionTimeout ||
       e.type == DioExceptionType.sendTimeout ||
       e.type == DioExceptionType.receiveTimeout) {
-    return NetworkErr(504, "Timeout");
+    return NetworkErr(504, "Request timeout");
   }
 
+  // ② 无法连接服务器
   if (e.type == DioExceptionType.connectionError) {
-    return NetworkErr(505, "Cannot connect to the Server");
+    return NetworkErr(503, "Cannot connect to server");
   }
 
-  String errorMsg = switch (sc) {
+  // ③ 优先使用后端返回的信息
+  final data = response?.data;
+
+  if (data is Map<String, dynamic>) {
+    final backendMessage = data["message"] ?? data["detail"];
+
+    if (backendMessage is String && backendMessage.isNotEmpty) {
+      return NetworkErr(sc ?? 500, backendMessage);
+    }
+
+    // 处理 FastAPI 422 detail 为 List 的情况
+    if (backendMessage is List && backendMessage.isNotEmpty) {
+      final first = backendMessage.first;
+      if (first is Map<String, dynamic> && first["msg"] != null) {
+        return NetworkErr(sc ?? 422, first["msg"].toString());
+      }
+    }
+  }
+  final errorMsg = switch (sc) {
     401 => "Unauthorized",
-    403 => "Forbiden",
-    404 => "Resources not Exist",
-    422 => "Illegal Parameters",
-    429 => "Too many times",
-    != null && >= 500 => "Unknown Server Error",
-    null|| int() => "Unknow Network Erro",
+    403 => "Forbidden",
+    404 => "Resource not found",
+    422 => "Illegal parameters",
+    429 => "Too many requests",
+    int s when s >= 500 => "Server error",
+    null => "Network error",
+    _ => "Unexpected error",
   };
 
-  return NetworkErr(sc??500, errorMsg);
+  return NetworkErr(sc ?? 500, errorMsg);
 }
 
 class ApiEnvelope<T> {
@@ -139,11 +165,10 @@ class ApiEnvelope<T> {
     required this.success,
     required this.code,
     required this.message,
-    this.data
+    this.data,
   });
 
-
-   factory ApiEnvelope.fromJson(
+  factory ApiEnvelope.fromJson(
     Map<String, dynamic> json,
     T Function(dynamic json) decoder,
   ) {
@@ -153,9 +178,7 @@ class ApiEnvelope<T> {
       success: success,
       code: json['code'] ?? 0,
       message: json['message'] ?? '',
-      data: success && json['data'] != null
-          ? decoder(json['data'])
-          : null,
+      data: success && json['data'] != null ? decoder(json['data']) : null,
     );
   }
 }

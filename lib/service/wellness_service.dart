@@ -15,9 +15,10 @@ class WellnessService {
   }
 
   Future<Result<Error, bool>> saveUserSelection(String tag, List<String> selectedIds) async {
-    return await repo.saveUserSelectedIds(
+    Result<Error, bool> res = await repo.saveUserSelectedIds(
       tag,
       selectedIds,
     );
+    return res;
   }
 }

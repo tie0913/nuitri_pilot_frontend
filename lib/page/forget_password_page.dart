@@ -63,9 +63,9 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
 
     String email = _emailControl.text;
     Result<Error, String> validatingResult = _validateEmail(email);
-    if (!DI.I.messageHandler.doIfErr(validatingResult)) {
+    if (!await DI.I.messageHandler.doIfErr(validatingResult)) {
       Result<Error, String?> res = await DI.I.authService.requestOtp(email, widget.forget);
-      if(!DI.I.messageHandler.doIfErr(res)){
+      if(!await DI.I.messageHandler.doIfErr(res)){
         setState(() {
           step = 2;
         });
@@ -87,9 +87,9 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
       newPwd,
       confirmPwd,
     );
-    if (!DI.I.messageHandler.doIfErr(validateRes)) {
+    if (!await DI.I.messageHandler.doIfErr(validateRes)) {
       Result<Error, String?> res = await DI.I.authService.confirmPassword(email, otp, newPwd, widget.forget);
-      if(!DI.I.messageHandler.doIfErr(res)){
+      if(!await DI.I.messageHandler.doIfErr(res)){
         DI.I.messageHandler.showMessage((res as OK).value);
         Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
       }

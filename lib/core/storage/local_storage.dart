@@ -12,11 +12,11 @@ class LocalStorage{
     return _instance;
   }
 
-  void put(String key, String value, {bool persist = false}) => cache.write(key: key, value: value);
+  Future<void> put(String key, String value, {bool persist = false}) async => await cache.write(key: key, value: value);
 
-  Future<String?> get(String key) => cache.read(key:key);
+  Future<String?> get(String key) async => await cache.read(key:key);
 
-  Future<bool> containsKey(String key) => cache.containsKey(key:key);
+  Future<bool> containsKey(String key) async => await cache.containsKey(key:key);
 
-  Future<void> del(String key) => cache.delete(key: key);
+  Future<void> del(String key) async => await cache.delete(key: key);
 }
