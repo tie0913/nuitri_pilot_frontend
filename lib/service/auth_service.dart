@@ -19,7 +19,7 @@ class AuthService{
       LocalStorage().put(LOCAL_TOKEN_KEY, (res as OK).value);
       return OK(true);
     }else{
-      return Err<BackendError, bool>((res as Err).error);
+      return Err<Error, bool>((res as Err).error);
     }
   }
 
