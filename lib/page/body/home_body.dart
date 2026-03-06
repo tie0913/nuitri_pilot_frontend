@@ -182,13 +182,14 @@ class _HomeBodyState extends State<HomeBody> {
 
   Future<void> _startUploadFlow(XFile xfile) async {
     final file = File(xfile.path);
+    final suggestionFuture = _getSuggestion(file);
 
     _showDraggableModal(
       builderWithScroll: (ctx, sc) {
         return FutureBuilder<FeedItem?>(
-          future: _getSuggesstion(file),
+          future: suggestionFuture,
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return ListView(
                 controller: sc,
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
@@ -213,6 +214,34 @@ class _HomeBodyState extends State<HomeBody> {
               );
             }
 
+            if (snapshot.hasError || snapshot.data == null) {
+              return ListView(
+                controller: sc,
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                children: [
+                  Text(
+                    'Unable to get analysis result',
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(file, fit: BoxFit.cover, height: 200),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Please try again with another photo or re-upload this image.',
+                    style: Theme.of(ctx).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              );
+            }
+
             final result = snapshot.data!;
             return _SuggestionSheetBody(
               scrollController: sc,
@@ -227,11 +256,11 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
-  Future<FeedItem?> _getSuggesstion(File file) async {
+  Future<FeedItem?> _getSuggestion(File file) async {
     FeedItem? newItem = await DI.I.suggestionSerivce.seekingSuggestion(file);
-    if(newItem != null){
+    if (newItem != null && mounted) {
       _items.insert(0, newItem);
-      setState((){});
+      setState(() {});
     }
     return newItem;
   }

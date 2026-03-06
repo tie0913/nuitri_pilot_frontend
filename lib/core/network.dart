@@ -1,43 +1,57 @@
-import 'package:dio/dio.dart';
-import 'package:nuitri_pilot_frontend/core/common_result.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:http_parser/http_parser.dart'; // 可选：设置 contentType 用
+
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as p;
+
+import 'package:nuitri_pilot_frontend/core/common_result.dart';
 
 final connector = Dio(
   BaseOptions(
-    //baseUrl: 'http://localhost:5007',
-    baseUrl: 'http://10.0.2.2:5007',
+    // If you run backend on phone/emulator, localhost will NOT work.
+    // For Windows desktop app + local backend, this is fine:
+    baseUrl: 'http://127.0.0.1:8000',
+
     connectTimeout: const Duration(seconds: 8),
+    sendTimeout: const Duration(seconds: 60),
     receiveTimeout: const Duration(seconds: 300),
+
+    responseType: ResponseType.json,
   ),
 );
 
-
-/// 判断 body 里是否含有“需要 multipart”的值
+/// Check if any value in body requires multipart
 bool _containsFile(dynamic v) {
   if (v is File || v is Uint8List || v is MultipartFile) return true;
   if (v is List) return v.any(_containsFile);
   return false;
 }
 
-/// 把 Map 转成可被 FormData.fromMap 接受的结构
+/// Detect MIME from file extension
+MediaType? _mimeFromPath(String path) {
+  final ext = p.extension(path).toLowerCase();
+  if (ext == '.jpg' || ext == '.jpeg') return MediaType('image', 'jpeg');
+  if (ext == '.png') return MediaType('image', 'png');
+  if (ext == '.webp') return MediaType('image', 'webp');
+  return null; // unknown -> Dio will still send it
+}
+
+/// Convert Map values into FormData-compatible values
 dynamic _toFormFieldValue(dynamic v) {
   if (v is File) {
     final name = p.basename(v.path);
-    // 这里假设你现在都传 webp，若不是可以按文件后缀判断
     return MultipartFile.fromFileSync(
       v.path,
       filename: name,
-      contentType: MediaType('image', 'webp'),
+      contentType: _mimeFromPath(v.path),
     );
   } else if (v is Uint8List) {
     return MultipartFile.fromBytes(
       v,
       filename: 'upload.bin',
-      // 按需改 contentType；如果你传的是 webp 字节：
-      contentType: MediaType('image', 'webp'),
+      contentType: MediaType('application', 'octet-stream'),
     );
   } else if (v is MultipartFile) {
     return v;
@@ -46,7 +60,7 @@ dynamic _toFormFieldValue(dynamic v) {
   } else if (v is DateTime) {
     return v.toIso8601String();
   } else {
-    return v; // String / num / bool / null
+    return v;
   }
 }
 
@@ -56,11 +70,9 @@ FormData _formDataFromBody(Map<String, dynamic> body) {
   return FormData.fromMap(map);
 }
 
-/*
- * post方法
- * 如果调用方在body里放了文件，那么就自动变为 表单提交
- * 否则就是使用application/json类型协议
- */
+/// POST helper:
+/// - If body contains File/Uint8List -> multipart FormData
+/// - Otherwise -> JSON
 Future<InterfaceResult<dynamic>> post<T>(
   String path,
   Map<String, dynamic> body, {
@@ -74,12 +86,31 @@ Future<InterfaceResult<dynamic>> post<T>(
       path,
       data: data,
       options: Options(
-        headers: {if (token != null) 'Authorization': token},
-        contentType: isMultipart ? 'multipart/form-data' : Headers.jsonContentType,
+        headers: {
+          if (token != null) 'Authorization': token,
+          // If your backend expects Bearer tokens instead, change to:
+          // if (token != null) 'Authorization': 'Bearer $token',
+        },
+
+        // CRITICAL FIX:
+        // Do NOT force 'multipart/form-data' or you lose the boundary.
+        // Let Dio set the boundary automatically.
+        contentType: isMultipart ? null : Headers.jsonContentType,
+
+        // Don't throw for non-200; we want to parse response envelope.
+        validateStatus: (_) => true,
       ),
     );
 
-    final env = ApiEnvelope<T>.fromJson(resp.data);
+    // Dio may return Map or String depending on backend / headers
+    final dynamic raw = resp.data;
+    final Map<String, dynamic> json = raw is Map<String, dynamic>
+        ? raw
+        : (raw is String
+            ? (jsonDecode(raw) as Map<String, dynamic>)
+            : <String, dynamic>{});
+
+    final env = ApiEnvelope<T>.fromJson(json);
 
     if (env.success) {
       return BizOk(env.data as T);
@@ -92,41 +123,6 @@ Future<InterfaceResult<dynamic>> post<T>(
     return NetworkErr(ErrorKind.unknown, -1, "Unknown Error $e");
   }
 }
-
-
-/*
- * Basic post method for networking
-Future<InterfaceResult<dynamic>> post<T>(
-  String path,
-  Map<String, dynamic> body,
-  {String? token}) async {
-  try {
-    final resp = await connector.post(
-      path,
-      data: body,
-      options: Options(
-        headers: {if (token != null) 'Authorization': token},
-      ),
-    );
-
-    final env = ApiEnvelope<T>.fromJson(resp.data);
-    /**
-     * 这里意味着后端执行给出了结果，有错就是业务错误了
-     * 所以逻辑出错了就返回业务错了，就返回业务错误。
-     * 业务成功就返回业务成功结果同时带着结果对象
-     */
-    if (env.success) {
-      return BizOk(env.data as T);
-    } else {
-      return mapBizError(env);
-    }
-  } on DioException catch (e) {
-    return mapDioError(e);
-  } catch (e) {
-    return NetworkErr(ErrorKind.unknown, -1, "Unknown Error $e");
-  }
-}
- */
 
 BizErr<T> mapBizError<T>(ApiEnvelope<T> env) {
   return BizErr(env.code, env.message);
@@ -153,10 +149,10 @@ NetworkErr<T> mapDioError<T>(DioException e) {
     429 => NetworkErr(ErrorKind.rateLimited, sc, "Too many times"),
     != null && >= 500 => NetworkErr(ErrorKind.server, sc, "Server Error"),
     _ => NetworkErr(
-      ErrorKind.unknown,
-      sc,
-      e.message ?? "Unknown Network Error",
-    ),
+        ErrorKind.unknown,
+        sc,
+        e.message ?? "Unknown Network Error",
+      ),
   };
 }
 
@@ -173,14 +169,12 @@ class ApiEnvelope<T> {
     required this.data,
   });
 
-  factory ApiEnvelope.fromJson(
-    Map<String, dynamic> json
-  ) {
+  factory ApiEnvelope.fromJson(Map<String, dynamic> json) {
     return ApiEnvelope(
-      success: json['success'],
-      code: json['code'],
-      message: json['message'],
-      data: json['data'] 
+      success: json['success'] == true,
+      code: json['code'] is int ? json['code'] : int.tryParse('${json['code']}') ?? -1,
+      message: json['message']?.toString() ?? '',
+      data: json['data'] as T?,
     );
   }
 }
