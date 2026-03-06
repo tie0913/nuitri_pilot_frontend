@@ -8,9 +8,9 @@ void main() {
 
   testWidgets('App launches end-to-end', (tester) async {
     await tester.pumpWidget(const NutriPilot());
-    await tester.pumpAndSettle();
 
-    // If app crashes at startup, this test will fail — that’s the point.
-    expect(true, true);
+    // Avoid pumpAndSettle hangs when startup has ongoing animations.
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.byType(NutriPilot), findsOneWidget);
   });
 }

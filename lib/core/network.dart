@@ -8,11 +8,17 @@ import 'package:path/path.dart' as p;
 
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 
+String _resolveBaseUrl() {
+  const envBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+  if (envBaseUrl.isNotEmpty) return envBaseUrl;
+
+  // Emulator-only default for local development.
+  return 'http://10.0.2.2:8000';
+}
+
 final connector = Dio(
   BaseOptions(
-    // If you run backend on phone/emulator, localhost will NOT work.
-    // For Windows desktop app + local backend, this is fine:
-    baseUrl: 'http://127.0.0.1:8000',
+    baseUrl: _resolveBaseUrl(),
 
     connectTimeout: const Duration(seconds: 8),
     sendTimeout: const Duration(seconds: 60),
@@ -107,8 +113,8 @@ Future<InterfaceResult<dynamic>> post<T>(
     final Map<String, dynamic> json = raw is Map<String, dynamic>
         ? raw
         : (raw is String
-            ? (jsonDecode(raw) as Map<String, dynamic>)
-            : <String, dynamic>{});
+              ? (jsonDecode(raw) as Map<String, dynamic>)
+              : <String, dynamic>{});
 
     final env = ApiEnvelope<T>.fromJson(json);
 
@@ -149,10 +155,10 @@ NetworkErr<T> mapDioError<T>(DioException e) {
     429 => NetworkErr(ErrorKind.rateLimited, sc, "Too many times"),
     != null && >= 500 => NetworkErr(ErrorKind.server, sc, "Server Error"),
     _ => NetworkErr(
-        ErrorKind.unknown,
-        sc,
-        e.message ?? "Unknown Network Error",
-      ),
+      ErrorKind.unknown,
+      sc,
+      e.message ?? "Unknown Network Error",
+    ),
   };
 }
 
@@ -172,7 +178,9 @@ class ApiEnvelope<T> {
   factory ApiEnvelope.fromJson(Map<String, dynamic> json) {
     return ApiEnvelope(
       success: json['success'] == true,
-      code: json['code'] is int ? json['code'] : int.tryParse('${json['code']}') ?? -1,
+      code: json['code'] is int
+          ? json['code']
+          : int.tryParse('${json['code']}') ?? -1,
       message: json['message']?.toString() ?? '',
       data: json['data'] as T?,
     );
