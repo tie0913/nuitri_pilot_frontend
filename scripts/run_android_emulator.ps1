@@ -2,12 +2,37 @@ param(
   [string]$ApiBaseUrl = "http://10.0.2.2:8000",
   [string]$EmulatorId = "Medium_Phone_API_36.0",
   [string]$DeviceId = "emulator-5554",
-  [bool]$PreloadBackendImages = $true,
+  [string]$PreloadBackendImages = "1",
   [string]$BackendImagesDir = "..\\nuitri_pilot_backend\\tests\\ai_eval\\images",
   [string]$DeviceImagesDir = "/sdcard/Download/nuitri_seed"
 )
 
 $ErrorActionPreference = "Stop"
+
+function To-Bool {
+  param(
+    [object]$Value,
+    [bool]$DefaultValue = $true
+  )
+
+  if ($null -eq $Value) {
+    return $DefaultValue
+  }
+
+  if ($Value -is [bool]) {
+    return [bool]$Value
+  }
+
+  $text = $Value.ToString().Trim().ToLowerInvariant()
+  if ($text -in @("1", "true", "yes", "on", "`$true")) {
+    return $true
+  }
+  if ($text -in @("0", "false", "no", "off", "`$false")) {
+    return $false
+  }
+
+  return $DefaultValue
+}
 
 $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $localPropsPath = Join-Path $projectRoot "android\local.properties"
@@ -67,8 +92,28 @@ function Wait-ForAndroidDevice {
   throw "Device $TargetDeviceId did not become ready within $TimeoutSeconds seconds."
 }
 
+function Ensure-AndroidDeviceInteractive {
+  param(
+    [string]$AdbPath,
+    [string]$TargetDeviceId
+  )
+
+  # Wake + dismiss keyguard + open home so Flutter can attach to a visible UI.
+  try { & $AdbPath -s $TargetDeviceId shell input keyevent KEYCODE_WAKEUP | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell wm dismiss-keyguard | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell input swipe 500 1700 500 400 250 | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell input keyevent 82 | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell input keyevent KEYCODE_HOME | Out-Null } catch {}
+}
+
 Push-Location $projectRoot
 try {
+  $doPreloadBackendImages = To-Bool -Value $PreloadBackendImages -DefaultValue $true
+
   $currentState = ""
   try {
     $currentState = (& $adb -s $DeviceId get-state 2>$null).Trim()
@@ -80,8 +125,9 @@ try {
   }
 
   Wait-ForAndroidDevice -AdbPath $adb -TargetDeviceId $DeviceId
+  Ensure-AndroidDeviceInteractive -AdbPath $adb -TargetDeviceId $DeviceId
 
-  if ($PreloadBackendImages) {
+  if ($doPreloadBackendImages) {
     $backendDirPath = Join-Path $projectRoot $BackendImagesDir
     $resolvedBackendDir = Resolve-Path $backendDirPath -ErrorAction SilentlyContinue
     if ($null -ne $resolvedBackendDir) {
@@ -93,6 +139,14 @@ try {
         & $adb -s $DeviceId push "$($f.FullName)" "$DeviceImagesDir/" | Out-Null
       }
       Write-Host "Preloaded $($files.Count) images to $DeviceImagesDir"
+      try {
+        $deviceCount = (& $adb -s $DeviceId shell "ls -1 $DeviceImagesDir | wc -l" 2>$null).Trim()
+        if ($deviceCount) {
+          Write-Host "Device folder count at ${DeviceImagesDir}: $deviceCount"
+        }
+      } catch {
+        # best-effort verification only
+      }
     } else {
       Write-Host "Skipping preload: backend image directory not found at $backendDirPath"
     }

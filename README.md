@@ -37,8 +37,10 @@ Optional custom backend URL:
 Disable image preload:
 
 ```powershell
-.\scripts\run_android_emulator.ps1 -PreloadBackendImages $false
+.\scripts\run_android_emulator.ps1 -PreloadBackendImages 0
 ```
+
+(`-PreloadBackendImages` accepts `1/0` or `true/false`.)
 
 ### Run tests on emulator (mobile-focused)
 

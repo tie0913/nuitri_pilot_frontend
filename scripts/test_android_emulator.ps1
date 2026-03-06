@@ -94,6 +94,24 @@ function Wait-ForAndroidDevice {
   throw "Device $TargetDeviceId did not become ready within $TimeoutSeconds seconds."
 }
 
+function Ensure-AndroidDeviceInteractive {
+  param(
+    [string]$AdbPath,
+    [string]$TargetDeviceId
+  )
+
+  # Wake + dismiss keyguard + open home so tests can run against a visible UI.
+  try { & $AdbPath -s $TargetDeviceId shell input keyevent KEYCODE_WAKEUP | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell wm dismiss-keyguard | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell input swipe 500 1700 500 400 250 | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell input keyevent 82 | Out-Null } catch {}
+  Start-Sleep -Milliseconds 200
+  try { & $AdbPath -s $TargetDeviceId shell input keyevent KEYCODE_HOME | Out-Null } catch {}
+}
+
 Push-Location $projectRoot
 try {
   $doPreloadBackendImages = To-Bool -Value $PreloadBackendImages -DefaultValue $true
@@ -111,6 +129,7 @@ try {
   }
 
   Wait-ForAndroidDevice -AdbPath $adb -TargetDeviceId $DeviceId
+  Ensure-AndroidDeviceInteractive -AdbPath $adb -TargetDeviceId $DeviceId
 
   if ($doPreloadBackendImages) {
     $backendDirPath = Join-Path $projectRoot $BackendImagesDir
@@ -124,6 +143,14 @@ try {
         & $adb -s $DeviceId push "$($f.FullName)" "$DeviceImagesDir/" | Out-Null
       }
       Write-Host "Preloaded $($files.Count) images to $DeviceImagesDir"
+      try {
+        $deviceCount = (& $adb -s $DeviceId shell "ls -1 $DeviceImagesDir | wc -l" 2>$null).Trim()
+        if ($deviceCount) {
+          Write-Host "Device folder count at ${DeviceImagesDir}: $deviceCount"
+        }
+      } catch {
+        # best-effort verification only
+      }
     } else {
       Write-Host "Skipping preload: backend image directory not found at $backendDirPath"
     }
@@ -135,6 +162,7 @@ try {
 
   if ($doRunIntegrationTests) {
     Wait-ForAndroidDevice -AdbPath $adb -TargetDeviceId $DeviceId
+    Ensure-AndroidDeviceInteractive -AdbPath $adb -TargetDeviceId $DeviceId
     flutter test integration_test -d $DeviceId --dart-define="API_BASE_URL=$ApiBaseUrl"
   }
 
