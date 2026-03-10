@@ -1,15 +1,25 @@
 import 'dart:io';
 
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
+import 'package:nuitri_pilot_frontend/core/compression_util.dart';
 import 'package:nuitri_pilot_frontend/data/data.dart';
 import 'package:nuitri_pilot_frontend/repo/suggestion_repo.dart';
 
 class SuggestionService {
   SuggestionRepo repo;
-  SuggestionService(this.repo);
+  final ImageCompressionService compressionService;
+  SuggestionService(this.repo, this.compressionService);
 
   Future<Result<Error, FeedItem?>> seekingSuggestion(File file) async {
-    return await repo.seekingSuggestion(file);
+    File? compressedFile;
+    try{
+       compressedFile = await compressionService.compressImage(file);
+      return await repo.seekingSuggestion(compressedFile);
+    }on Exception {
+      return Err(AppError("Compressing Image has error"));
+    }finally{
+      await compressedFile?.delete();
+    }
   }
 
 

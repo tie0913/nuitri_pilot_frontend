@@ -51,6 +51,8 @@ dependencies:
   flutter_slidable: ^4.0.3
   another_flushbar: ^1.12.32
   uuid: ^4.5.3
+  flutter_image_compress: ^2.4.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

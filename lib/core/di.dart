@@ -1,5 +1,6 @@
 // lib/core/di.dart
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/compression_util.dart';
 import 'package:nuitri_pilot_frontend/core/message_handler.dart';
 import 'package:nuitri_pilot_frontend/repo/suggestion_repo.dart';
 import 'package:nuitri_pilot_frontend/repo/wellness_repo.dart';
@@ -47,6 +48,6 @@ class DI {
       navigatorKey: navigatorKey,
       messengerKey: scaffoldMessengerKey,
     );
-    _suggestionService = SuggestionService(SuggestionRepo());
+    _suggestionService = SuggestionService(SuggestionRepo(), ImageCompressionService());
   }
 }
