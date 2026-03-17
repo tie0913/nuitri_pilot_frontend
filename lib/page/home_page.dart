@@ -19,7 +19,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nutri Pilot')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Nutri Pilot')
+      ),
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

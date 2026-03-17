@@ -91,7 +91,9 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
       Result<Error, String?> res = await DI.I.authService.confirmPassword(email, otp, newPwd, widget.forget);
       if(!await DI.I.messageHandler.doIfErr(res)){
         DI.I.messageHandler.showMessage((res as OK).value);
-        Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
+        Future.delayed(const Duration(seconds: 2), (){
+          Navigator.pushNamedAndRemoveUntil(context, '/signin', (r) => false);
+        });
       }
     }
   }
