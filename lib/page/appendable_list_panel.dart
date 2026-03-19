@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
-import 'package:nuitri_pilot_frontend/core/string_extension.dart';
 import 'package:nuitri_pilot_frontend/data/data.dart';
 
 class AppendableListPanel extends StatefulWidget {

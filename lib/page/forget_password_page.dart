@@ -66,8 +66,11 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
     if (!await DI.I.messageHandler.doIfErr(validatingResult)) {
       Result<Error, String?> res = await DI.I.authService.requestOtp(email, widget.forget);
       if(!await DI.I.messageHandler.doIfErr(res)){
-        setState(() {
-          step = 2;
+        DI.I.messageHandler.showMessage((res as OK).value);
+        Future.delayed(const Duration(seconds: 4), (){
+          setState(() {
+            step = 2;
+          });
         });
       }
     }
