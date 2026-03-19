@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
+import 'package:nuitri_pilot_frontend/core/string_extension.dart';
 import 'package:nuitri_pilot_frontend/data/data.dart';
 
 class AppendableListPanel extends StatefulWidget {
@@ -28,6 +29,9 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
   }
 
   Future<void> _load() async {
+
+ 
+
     setState(() {
       _loading = true;
       _error = false;
@@ -77,6 +81,9 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
   Future<void> _addNewItem() async {
     final controller = TextEditingController();
 
+
+
+
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -109,7 +116,10 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
     if (name == null) return;
     final trimmed = name.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty) {
+      DI.I.messageHandler.doIfErr(Err(AppError("Item added is empty")));
+      return;
+    }
 
     final result =
         await DI.I.wellnessService.addItem(widget.tag, trimmed);
