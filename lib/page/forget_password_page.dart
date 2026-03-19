@@ -61,7 +61,7 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
       _loading = true;
     });
 
-    String email = _emailControl.text;
+    String email = _emailControl.text.trim();
     Result<Error, String> validatingResult = _validateEmail(email);
     if (!await DI.I.messageHandler.doIfErr(validatingResult)) {
       Result<Error, String?> res = await DI.I.authService.requestOtp(email, widget.forget);
@@ -77,10 +77,10 @@ class _ForgetPasswordState extends State<ForgetPasswordPage> {
   }
 
   _resetPassword() async {
-    String email = _emailControl.text;
-    String otp = _otpControl.text;
-    String newPwd = _newPwdControl.text;
-    String confirmPwd = _confirmPwdControl.text;
+    String email = _emailControl.text.trim();
+    String otp = _otpControl.text.trim();
+    String newPwd = _newPwdControl.text.trim();
+    String confirmPwd = _confirmPwdControl.text.trim();
 
     Result<Error, Map<String, dynamic>> validateRes = _validateReset(
       otp,

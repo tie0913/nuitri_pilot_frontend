@@ -1,5 +1,7 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
+import 'package:nuitri_pilot_frontend/core/string_extension.dart';
 import 'package:nuitri_pilot_frontend/core/widgets/text_field_widget.dart';
 import '../core/di.dart';
 
@@ -17,7 +19,29 @@ class _SignInPageState extends State<SignInPage> {
 
   bool _loading = false;
 
+  Result<Error, bool> validate() {
+
+    String email = _userCtrl.text.trim();
+    if(email.isNullOrBlankOrEmpty){
+      return Err(AppError("Email can not be empty"));
+    }
+    if (!EmailValidator.validate(email)) {
+      return Err(AppError("Please input legal email"));
+    }
+
+    if(_passCtrl.text.isNullOrBlankOrEmpty){
+      return Err(AppError("Password can not be empty"));
+    }
+
+    return OK(true);
+  }
+
   Future<void> _submit() async {
+
+    if(await DI.I.messageHandler.doIfErr(validate())){
+      return;
+    }
+
     final navigator = Navigator.of(context);
     setState(() { _loading = true;});
     Result<Error, bool> result = await DI.I.authService.signIn(_userCtrl.text.trim(), _passCtrl.text);
