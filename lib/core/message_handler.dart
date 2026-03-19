@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
-import 'package:another_flushbar/flushbar.dart';
+import 'package:nuitri_pilot_frontend/core/nutri_flushbar.dart';
 
 abstract interface class MessageHandler {
   Future<bool> doIfErr(Result<Error, dynamic> result);
@@ -50,14 +50,7 @@ class GlobalMessageHandler implements MessageHandler {
   void showAppErr(String message) {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
-    Flushbar(
-      message: message,
-      duration: const Duration(seconds: 3),
-      flushbarPosition: FlushbarPosition.TOP,
-      backgroundColor: Colors.red,
-      margin: const EdgeInsets.all(8),
-      borderRadius: BorderRadius.circular(12),
-    ).show(ctx);
+    AppFlushbar.error(ctx, message);
   }
 
   Future<void> showBackendErr(String message) async {
@@ -137,14 +130,7 @@ class GlobalMessageHandler implements MessageHandler {
   void showMessage(String message) {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
-    Flushbar(
-      message: message,
-      duration: const Duration(seconds: 3),
-      flushbarPosition: FlushbarPosition.TOP,
-      backgroundColor: Colors.amber,
-      margin: const EdgeInsets.all(8),
-      borderRadius: BorderRadius.circular(12),
-    ).show(ctx);
+    AppFlushbar.success(ctx, message);
   }
 
   String getErrorMessage(Error e) {
