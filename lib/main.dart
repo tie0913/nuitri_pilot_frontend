@@ -53,7 +53,7 @@ class _NoStretchScrollBehavior extends ScrollBehavior {
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return const ClampingScrollPhysics(); // 👈 全局统一手感
+    return const ClampingScrollPhysics(); 
   }
 
   @override
