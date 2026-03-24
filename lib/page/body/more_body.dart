@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:nuitri_pilot_frontend/core/build_context_extension.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'package:nuitri_pilot_frontend/core/di.dart';
-import 'package:nuitri_pilot_frontend/core/theme.dart';
 import 'package:nuitri_pilot_frontend/core/theme_control.dart';
 
 class MoreBody extends StatelessWidget {
@@ -16,8 +15,6 @@ class MoreBody extends StatelessWidget {
       }
     }
   }
-
-  void _enterSettings(BuildContext context) {}
 
   @override
 Widget build(BuildContext context) {

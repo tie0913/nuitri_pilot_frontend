@@ -18,7 +18,6 @@ Future<void> main() async {
   DI.I.init();
   runApp(const NutriPilot());
 }
-
 class NutriPilot extends StatelessWidget {
   const NutriPilot({super.key});
 
@@ -37,8 +36,32 @@ class NutriPilot extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: DI.navigatorKey,
           scaffoldMessengerKey: DI.scaffoldMessengerKey,
+          builder: (context, child) {
+            return ScrollConfiguration(
+              behavior: const _NoStretchScrollBehavior(),
+              child: child!,
+            );
+          },
         );
       },
     );
+  }
+}
+
+class _NoStretchScrollBehavior extends ScrollBehavior {
+  const _NoStretchScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const ClampingScrollPhysics(); // 👈 全局统一手感
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }

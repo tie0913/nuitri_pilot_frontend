@@ -87,6 +87,7 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   void _onScroll() {
+    print("scroll: ${_scrollController.position.pixels}");
     final pos = _scrollController.position;
     final double offset = pos.pixels;
 
