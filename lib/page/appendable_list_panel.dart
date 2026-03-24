@@ -149,10 +149,7 @@ class _AppendableListPanelState extends State<AppendableListPanel> {
 
     if (!await DI.I.messageHandler.doIfErr(result)) {
       setState(() => _dirty = false);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saved')),
-      );
+      DI.I.messageHandler.showMessage("Saved");
     }
   }
 

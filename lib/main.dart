@@ -12,7 +12,6 @@ import 'core/di.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnvLoader.init();
-  print(AppConfig.baseUrl);
   if (!await LocalStorage().containsKey(UUID_KEY)) {
     String uuid = Uuid().v4();
     await LocalStorage().put(UUID_KEY, uuid);
