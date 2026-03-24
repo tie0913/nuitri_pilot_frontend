@@ -25,6 +25,7 @@ class AuthService{
 
   Future<Result<Error, bool>> signOut() async {
     String? token = await LocalStorage().get(LOCAL_TOKEN_KEY);
+    await LocalStorage().del(LOCAL_TOKEN_KEY);
     return await repo.signOut(token!);
   }
 
