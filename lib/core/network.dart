@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:nuitri_pilot_frontend/core/app_config.dart';
 import 'package:nuitri_pilot_frontend/core/common_result.dart';
 import 'dart:io';
 import 'dart:typed_data';
@@ -10,12 +11,7 @@ import 'package:path/path.dart' as p;
 
 final connector = Dio(
   BaseOptions(
-    // iPhone
-    //baseUrl: 'http://localhost:5007',
-    // Android
-    baseUrl: 'http://10.0.2.2:5007',
-    // Online
-    //baseUrl: 'https://backend-production-aea9.up.railway.app',
+    baseUrl: AppConfig.baseUrl,
     connectTimeout: const Duration(seconds: 8),
     receiveTimeout: const Duration(seconds: 300),
   ),

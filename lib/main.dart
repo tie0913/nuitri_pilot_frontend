@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:nuitri_pilot_frontend/core/app_config.dart';
+import 'package:nuitri_pilot_frontend/core/env_loader.dart';
 import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
 import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
 import 'package:nuitri_pilot_frontend/core/theme_control.dart';
@@ -9,7 +11,8 @@ import 'core/di.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await EnvLoader.init();
+  print(AppConfig.baseUrl);
   if (!await LocalStorage().containsKey(UUID_KEY)) {
     String uuid = Uuid().v4();
     await LocalStorage().put(UUID_KEY, uuid);
