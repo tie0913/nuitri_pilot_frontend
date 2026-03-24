@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nuitri_pilot_frontend/core/app_config.dart';
 import 'package:nuitri_pilot_frontend/core/env_loader.dart';
 import 'package:nuitri_pilot_frontend/core/storage/keys.dart';
 import 'package:nuitri_pilot_frontend/core/storage/local_storage.dart';
