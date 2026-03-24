@@ -1,4 +1,4 @@
-package com.example.nuitri_pilot_frontend
+package com.nutripilot.app
 
 import io.flutter.embedding.android.FlutterActivity
 

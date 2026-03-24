@@ -50,15 +50,20 @@ class _RequireAuthState extends State<RequireAuth> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
               DI.I.messageHandler.doIfErr(result!);
-              Navigator.of(context)
-                  .pushReplacementNamed(widget.redirectTo);
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                widget.redirectTo,
+                (route) => false,
+              );
+            
             });
           } else if (result is OK<Error, bool>) {
             if (!result.value) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
-                Navigator.of(context)
-                    .pushReplacementNamed(widget.redirectTo);
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  widget.redirectTo,
+                  (route) => false,
+                );
               });
             }
           }
