@@ -37,6 +37,15 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+    applicationVariants.all {
+        outputs.all {
+            val appName = "NutriPilot"
+            val variantName = name
+
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = "${appName}-${variantName}.apk"
+        }
+    }
 }
 
 flutter {
