@@ -33,7 +33,7 @@ class NutriPilot extends StatelessWidget {
           darkTheme: AppTheme.dark,
           themeMode: mode,
           onGenerateRoute: AppRouter.generateRoute,
-          initialRoute: '/home',
+          initialRoute: '/',
           debugShowCheckedModeBanner: false,
           navigatorKey: DI.navigatorKey,
           scaffoldMessengerKey: DI.scaffoldMessengerKey,

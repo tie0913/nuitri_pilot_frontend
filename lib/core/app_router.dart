@@ -10,6 +10,7 @@ class AppRouter {
     switch (settings.name) {
       case '/home':
         return _guarded((_) => const HomePage()); // 受保护
+      case '/':
       case '/signin':
         return MaterialPageRoute(builder: (_) => const SignInPage());
       case '/forgetPassword':
