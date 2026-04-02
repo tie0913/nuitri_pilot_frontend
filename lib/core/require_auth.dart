@@ -49,7 +49,7 @@ class _RequireAuthState extends State<RequireAuth> {
           if (result is Err) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
-              DI.I.messageHandler.doIfErr(result!);
+              //DI.I.messageHandler.doIfErr(result!);
               Navigator.of(context).pushNamedAndRemoveUntil(
                 widget.redirectTo,
                 (route) => false,
