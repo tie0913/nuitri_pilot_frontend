@@ -13,8 +13,8 @@ class SuggestionService {
   Future<Result<Error, FeedItem?>> seekingSuggestion(File file) async {
     File? compressedFile;
     try{
-       compressedFile = await compressionService.compressImage(file);
-      return await repo.seekingSuggestion(compressedFile);
+        compressedFile = await compressionService.compressImage(file);
+        return await repo.seekingSuggestion(compressedFile);
     }on Exception {
       return Err(AppError("Compressing Image has error"));
     }finally{
