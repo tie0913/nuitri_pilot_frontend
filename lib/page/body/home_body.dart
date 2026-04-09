@@ -125,7 +125,7 @@ class _HomeBodyState extends State<HomeBody> {
           initialChildSize: 0.8,
           minChildSize: 0.4,
           maxChildSize: 0.9,
-          snap: false, // ✅ 关闭 snap，避免 pop 时抖一下
+          snap: false, // 关闭 snap，避免 pop 时抖一下
           builder: (sheetCtx, scrollController) {
             return Column(
               children: [
@@ -318,7 +318,7 @@ class _HomeBodyState extends State<HomeBody> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Center(
                           child: Text(
-                            'You are reaching my Bottom Line!',
+                            'No More Records',
                             style: Theme.of(ctx)
                                 .textTheme
                                 .bodySmall
